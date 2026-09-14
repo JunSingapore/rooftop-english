@@ -124,8 +124,15 @@ p { margin: 0; }
 .chip.review { border-color: var(--slate); color: var(--slate); }
 .chip.bank { border-color: var(--line); color: var(--muted); }
 .meter { display: flex; flex-direction: column; gap: 5px; font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; display: flex; }
 .bar i { display: block; height: 100%; background: var(--lamp); border-radius: 3px; }
+.bar.two i { border-radius: 0; }
+.bar i.lrn { opacity: 0.4; }
+.meter .of { opacity: 0.75; }
+.legend { font-size: 15px; color: var(--muted); display: flex; gap: 6px 18px; flex-wrap: wrap; align-items: center; }
+.legend i { display: inline-block; width: 18px; height: 6px; border-radius: 3px; background: var(--lamp); margin-right: 6px; vertical-align: middle; }
+.legend i.lrn { opacity: 0.4; }
+.gain { font-size: 18px; }
 @media (max-width: 600px) {
   .unit { grid-template-columns: 1fr auto; }
   .unit .meter { grid-column: 1 / -1; grid-row: 2; }
@@ -300,7 +307,9 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
   function rec(id) { return S.items[id]; }
   function isDue(id) { var r = rec(id); return !!(r && r.due && r.due <= today()); }
   function doneToday(id) { var r = rec(id); return !!(r && r.last === today()); }
-  function mastered(id) { var r = rec(id); return !!(r && r.box >= 3); }
+  function mastered(id) { var r = rec(id); return !!(r && r.box >= 3); }   // 別の日に2回正解
+  function learning(id) { var r = rec(id); return !!(r && r.box === 2); }  // 1回正解・未確認
+  function box(id) { var r = rec(id); return r ? r.box : 0; }
   function correctText(it) { return it.type === "card" ? it.word : it.options[it.a]; }
   function promptText(it) { return it.type === "card" ? it.word + " — " + it.def : it.q; }
 
@@ -384,6 +393,7 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
     var prompts = (u && u.speak) || [];
     s.speak = prompts.length ? prompts[S.spoken % prompts.length] : null;
     s.i = 0; s.answers = []; s.start = Date.now(); s.phase = "items";
+    s.before = {}; s.queue.forEach(function (p) { s.before[p.id] = box(p.id); });
     sess = s; ui = {}; go("quiz");
   }
 
@@ -442,13 +452,16 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
     h += '<button class="btn primary" data-action="start-mix">Start</button></section>';
     if (ui.homeMsg) h += '<p class="hintbox" role="status">' + esc(ui.homeMsg) + "</p>";
 
-    h += '<section style="display:flex;flex-direction:column;gap:12px"><h3>Pick a topic</h3><ul class="units">';
+    h += '<section style="display:flex;flex-direction:column;gap:12px"><h3>Pick a topic</h3>';
+    h += '<p class="legend"><span><i class="lrn"></i>Learning = right once</span><span><i></i>Secure = right again on another day</span></p><ul class="units">';
     C.units.forEach(function (u) {
       var items = C.items.filter(function (it) { return it.unit === u.id; });
       var m = items.filter(function (it) { return mastered(it.id); }).length;
+      var l = items.filter(function (it) { return learning(it.id); }).length;
+      var pct = function (n) { return items.length ? Math.round(n / items.length * 100) : 0; };
       var label = u.status === "next" ? "Coming up · " + u.when : u.status === "review" ? "Look back · " + u.when : "Anytime";
       h += '<li class="unit"><div class="t"><span class="chip ' + u.status + '">' + esc(label) + '</span><span class="name">' + esc(u.title) + '</span><span class="ja">' + esc(u.ja) + "</span></div>";
-      h += '<div class="meter"><span>' + m + " / " + items.length + ' secure</span><div class="bar"><i style="width:' + (items.length ? Math.round(m / items.length * 100) : 0) + '%"></i></div></div>';
+      h += '<div class="meter"><span>' + m + " secure · " + l + ' learning <span class="of">/ ' + items.length + '</span></span><div class="bar two"><i style="width:' + pct(m) + '%"></i><i class="lrn" style="width:' + pct(l) + '%"></i></div></div>';
       h += '<button class="btn ghost small" data-action="start-unit" data-unit="' + esc(u.id) + '">Practise</button></li>';
     });
     h += "</ul></section>";
@@ -576,6 +589,13 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
     var h = '<div class="wrap"><header class="masthead"><p class="eyebrow">' + (timeUp ? "Ten minutes — time’s up" : "Round complete") + "</p><h1>" +
       (ok === res.length ? "A perfect round." : ok / res.length >= 0.7 ? "Lovely work tonight." : "Good effort — that’s how words stick.") + "</h1></header>";
     h += '<p class="score">' + ok + " <span>/ " + res.length + " right</span></p>";
+    var nowSecure = res.filter(function (a) { return sess.before[a.id] < 3 && box(a.id) >= 3; }).length;
+    var nowLearning = res.filter(function (a) { return sess.before[a.id] < 2 && box(a.id) === 2; }).length;
+    if (nowSecure || nowLearning) {
+      h += '<p class="gain">' + (nowSecure ? "<strong>" + nowSecure + "</strong> now secure" : "") + (nowSecure && nowLearning ? " · " : "") +
+        (nowLearning ? "<strong>" + nowLearning + "</strong> now learning" : "") +
+        (nowLearning ? '<br><span class="muted small">Get the learning ones right again on another day and they become secure.</span>' : "") + "</p>";
+    }
     h += skyline(true);
     if (missed.length) {
       h += '<section style="display:flex;flex-direction:column;gap:12px"><h3>Worth another look</h3><ul class="recap">';
