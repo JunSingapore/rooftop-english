@@ -248,9 +248,11 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
 
   var KEY = "rooftop-english-v1";
   var INTERVAL = [0, 1, 3, 7, 14, 30];   // Leitner: box → 次に出すまでの日数
-  var LIMIT = 12;                          // 1回の問題数
-  var MAX_SECS = 600;                      // 10分で打ち止め（延長しない）
-  var DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  var GAP = [0, 1, 2, 2, 3, 4];          // 同じ日に続けてやるとき：box ごとに何回分あければ再出題してよいか
+  var ROUNDS = { short: { n: 12, secs: 600 }, long: { n: 26, secs: 1500 } };
+  var LIMIT = ROUNDS.short.n;            // いまの回の問題数（startRound で切り替え）
+  var MAX_SECS = ROUNDS.short.secs;
+  var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
   var byId = {}; C.items.forEach(function (it) { byId[it.id] = it; });
   var unitById = {}; C.units.forEach(function (u) { unitById[u.id] = u; });
@@ -261,7 +263,7 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
   function normalize(s) {
     s.items = s.items || {}; s.days = s.days || []; s.sessions = s.sessions || [];
     s.follow = (s.follow || []).filter(function (f) { return f && typeof f === "object" && f.skill; });
-    s.spoken = s.spoken || 0; return s;
+    s.spoken = s.spoken || 0; s.round = s.round || 0; return s;
   }
   // バックアップ読み込み時の検証（壊れたデータで記録を上書きしない）
   function validState(s) {
@@ -299,15 +301,24 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
   }
   function today() { return ymd(new Date()); }
   function addDays(n) { var d = new Date(); d.setDate(d.getDate() + n); return ymd(d); }
-  function monday() { var d = new Date(); var wd = (d.getDay() + 6) % 7; d.setDate(d.getDate() - wd); d.setHours(0, 0, 0, 0); return d; }
 
   /* ── helpers ── */
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
   function rec(id) { return S.items[id]; }
-  function isDue(id) { var r = rec(id); return !!(r && r.due && r.due <= today()); }
-  function doneToday(id) { var r = rec(id); return !!(r && r.last === today()); }
-  function mastered(id) { var r = rec(id); return !!(r && r.box >= 3); }   // 別の日に2回正解
+  function roundsSince(r) { return S.round - (r.round || 0); }
+  // 出しどき：日数が来た or （まとめてやる日のために）何回分か空いた
+  function isDue(id) {
+    var r = rec(id); if (!r) return false;
+    if (r.due && r.due <= today()) return !tooSoon(id);
+    return roundsSince(r) >= (GAP[r.box] || 1);
+  }
+  // 同じ日に続けてやるとき、直前の回で出した問題をすぐ繰り返さない
+  function tooSoon(id) {
+    var r = rec(id); if (!r) return false;
+    return r.last === today() && roundsSince(r) < (GAP[r.box] || 1);
+  }
+  function mastered(id) { var r = rec(id); return !!(r && r.box >= 3); }   // 別の回に2回正解
   function learning(id) { var r = rec(id); return !!(r && r.box === 2); }  // 1回正解・未確認
   function box(id) { var r = rec(id); return r ? r.box : 0; }
   function correctText(it) { return it.type === "card" ? it.word : it.options[it.a]; }
@@ -315,7 +326,7 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
 
   function record(id, ok) {
     var r = S.items[id] || { box: 0, seen: 0, right: 0, wrong: 0 };
-    r.seen++; r.last = today();
+    r.seen++; r.last = today(); r.round = S.round;
     if (ok) { r.right++; r.box = Math.min(5, Math.max(1, r.box) + 1); r.due = addDays(INTERVAL[r.box]); }
     else {
       r.wrong++; r.box = 1; r.due = addDays(1);   // 間違えたら翌日以降（その場で延長しない）
@@ -339,12 +350,12 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
   function builder() {
     var picked = [];
     function has(id) { for (var i = 0; i < picked.length; i++) if (picked[i].id === id) return true; return false; }
-    // 今日すでに答えた問題は出さない（誤答は翌日以降に回す）
+    // 直前の回で出したものだけ外す（週1回・まとめてやる使い方に合わせる）
     function addFrom(list, n, why, extra) {
       var k = 0;
       for (var i = 0; i < list.length && k < n && picked.length < LIMIT; i++) {
         var it = list[i];
-        if (!has(it.id) && !doneToday(it.id)) { picked.push({ id: it.id, why: why, follow: extra }); k++; }
+        if (!has(it.id) && !tooSoon(it.id)) { picked.push({ id: it.id, why: why, follow: extra }); k++; }
       }
     }
     // 誤答の予約：同じ技能の、元とは別の問題を1問ずつ
@@ -360,15 +371,15 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
     var b = builder();
     var due = C.items.filter(function (it) { return isDue(it.id); })
       .sort(function (x, y) { return rec(x.id).due < rec(y.id).due ? -1 : 1; });
-    b.addFrom(due, 4, "review");
-    b.addFollowups(null, 3);
+    b.addFrom(due, Math.ceil(LIMIT * 0.5), "review");
+    b.addFollowups(null, LIMIT > 15 ? 5 : 3);
     var nextU = C.units.filter(function (u) { return u.status === "next"; }).map(function (u) { return u.id; });
     var revU = C.units.filter(function (u) { return u.status === "review"; }).map(function (u) { return u.id; });
     function from(units) { return rank(C.items.filter(function (it) { return units.indexOf(it.unit) >= 0; })); }
-    b.addFrom(from(nextU), 5, "new");
-    b.addFrom(from(revU), 2, "new");
-    b.addFrom(from(["spelling"]), 2, "new");
-    b.addFrom(from(["grammar"]), 1, "new");
+    b.addFrom(from(nextU), Math.ceil(LIMIT * 0.4), "new");
+    b.addFrom(from(revU), Math.ceil(LIMIT * 0.2), "new");
+    b.addFrom(from(["spelling"]), Math.ceil(LIMIT * 0.17), "new");
+    b.addFrom(from(["grammar"]), Math.ceil(LIMIT * 0.1), "new");
     b.addFrom(rank(C.items), LIMIT, "new");
     if (!b.picked.length) return null;
     var q = shuffle(b.picked);
@@ -387,11 +398,14 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
     return { mode: "unit", unit: uid, queue: shuffle(b.picked) };
   }
 
+  function setRound(kind) { var r = ROUNDS[kind] || ROUNDS.short; LIMIT = r.n; MAX_SECS = r.secs; }
+
   function startSession(s) {
     if (!s) { ui = { homeMsg: "This topic is done for today — every question has been answered. Come back tomorrow!" }; go("home"); return; }
     var u = unitById[s.unit];
     var prompts = (u && u.speak) || [];
     s.speak = prompts.length ? prompts[S.spoken % prompts.length] : null;
+    S.round = (S.round || 0) + 1; save();
     s.i = 0; s.answers = []; s.start = Date.now(); s.phase = "items";
     s.before = {}; s.queue.forEach(function (p) { s.before[p.id] = box(p.id); });
     sess = s; ui = {}; go("quiz");
@@ -411,14 +425,27 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
     }, 250);
   }
 
-  /* ── skyline: this week, one building per day; practised days light up ── */
-  function skyline(pendingToday) {
-    var mon = monday(), H = [66, 84, 72, 94, 78, 88, 70], out = "";
+  /* ── skyline: 直近7週。練習した週の窓に明かりが灯る ── */
+  function weekStart(d) { var x = new Date(d); var wd = (x.getDay() + 6) % 7; x.setDate(x.getDate() - wd); x.setHours(0, 0, 0, 0); return x; }
+  function shortDate(d) { return d.getDate() + " " + MONTHS[d.getMonth()]; }
+  function weekLit(i) {   // i: 0 = 6週前 … 6 = 今週
+    var a = weekStart(new Date()); a.setDate(a.getDate() - (6 - i) * 7);
+    var b = new Date(a); b.setDate(a.getDate() + 7);
+    var from = ymd(a), to = ymd(b);
+    return { lit: S.days.some(function (d) { return d >= from && d < to; }), label: i === 6 ? "This week" : i === 5 ? "Last week" : shortDate(a) };
+  }
+  function weeksLit() { var n = 0; for (var i = 0; i < 7; i++) if (weekLit(i).lit) n++; return n; }
+  function daysSinceLast() {
+    if (!S.days.length) return null;
+    var last = S.days.slice().sort()[S.days.length - 1];
+    return Math.round((new Date(today()) - new Date(last)) / 86400000);
+  }
+
+  function skyline(pendingNow) {
+    var H = [66, 84, 72, 94, 78, 88, 70], out = "";
     for (var i = 0; i < 7; i++) {
-      var d = new Date(mon); d.setDate(mon.getDate() + i);
-      var key = ymd(d), isToday = key === today();
-      var lit = S.days.indexOf(key) >= 0;
-      var winCls = "win" + (lit ? (pendingToday && isToday ? " pending" : " on") : "");
+      var wk = weekLit(i), isNow = i === 6;
+      var winCls = "win" + (wk.lit ? (pendingNow && isNow ? " pending" : " on") : "");
       var x = 12 + i * 97, w = 80, base = 112, h = H[i], top = base - h;
       out += '<rect class="roof" x="' + (x + w - 24) + '" y="' + (top - 9) + '" width="9" height="14"/>';
       out += '<polygon class="roof" points="' + (x - 3) + "," + (top + 16) + " " + (x + 9) + "," + top + " " + (x + w - 9) + "," + top + " " + (x + w + 3) + "," + (top + 16) + '"/>';
@@ -427,33 +454,35 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
       for (var y = top + 26; y + 16 <= base - 8; y += 24) {
         for (var c = 0; c < 3; c++) out += '<rect class="' + winCls + '" x="' + (x + 11 + c * 23) + '" y="' + y + '" width="12" height="15" rx="1.5"/>';
       }
-      out += '<text class="day' + (isToday ? " today" : "") + '" x="' + (x + w / 2) + '" y="' + (base + 24) + '" text-anchor="middle">' + (isToday ? "Today" : DAYS[i]) + "</text>";
+      out += '<text class="day' + (isNow ? " today" : "") + '" x="' + (x + w / 2) + '" y="' + (base + 24) + '" text-anchor="middle">' + esc(wk.label) + "</text>";
     }
     out += '<rect class="street" x="0" y="112" width="700" height="3"/>';
-    return '<svg class="skyline" viewBox="0 0 700 142" role="img" aria-label="This week: one building for each day. Windows light up on days you practised.">' + out + "</svg>";
+    return '<svg class="skyline" viewBox="0 0 700 142" role="img" aria-label="The last seven weeks. A window lights up in every week you practised.">' + out + "</svg>";
   }
-
-  function daysThisWeek() { var m = ymd(monday()); return S.days.filter(function (d) { return d >= m; }).length; }
 
   /* ── home ── */
   function homeHTML() {
     var dueN = C.items.filter(function (it) { return isDue(it.id); }).length;
     var nextU = C.units.filter(function (u) { return u.status === "next"; })[0];
-    var practisedToday = S.days.indexOf(today()) >= 0;
-    var nights = daysThisWeek();
+    var thisWeek = weekLit(6).lit;
+    var away = daysSinceLast();
     var h = '<div class="wrap">';
-    h += '<header class="masthead"><h1>Rooftop English</h1><p>' + (practisedToday ? "Your window is lit tonight. Fancy another round?" : "Ten minutes on the rooftops. Light up today’s window.") + "</p></header>";
+    h += '<header class="masthead"><h1>Rooftop English</h1><p>' +
+      (away === null ? "Pick a round whenever you have time \u2014 no need to come every day."
+        : away >= 7 ? "Welcome back. Everything you practised is still here, waiting."
+          : thisWeek ? "This week’s window is lit. Another round?" : "A round or two this week keeps the words sticking.") + "</p></header>";
     h += skyline(false);
-    h += '<p class="week-note">' + nights + " of 7 days this week</p>";
-    h += '<section class="today" aria-label="Today’s practice"><div style="display:flex;flex-direction:column;gap:8px">';
-    h += '<p class="eyebrow">Today’s practice</p><h2>' + (nextU ? esc(nextU.title) + " + a mix" : "A mixed round") + "</h2>";
-    h += '<div class="facts"><span><strong>' + LIMIT + "</strong> questions</span><span>about <strong>10</strong> minutes</span>" +
-      (dueN ? "<span><strong>" + dueN + "</strong> to look at again</span>" : "") + "</div></div>";
-    h += '<button class="btn primary" data-action="start-mix">Start</button></section>';
+    h += '<p class="week-note">' + weeksLit() + " of the last 7 weeks" + (away ? " \u00b7 last round " + away + (away === 1 ? " day ago" : " days ago") : "") + "</p>";
+    h += '<section class="today" aria-label="Practice"><div style="display:flex;flex-direction:column;gap:8px">';
+    h += '<p class="eyebrow">Ready for you</p><h2>' + (nextU ? esc(nextU.title) + " + a mix" : "A mixed round") + "</h2>";
+    h += '<div class="facts"><span><strong>' + ROUNDS.short.n + "</strong> questions, about <strong>10</strong> minutes</span>" +
+      (dueN ? "<span><strong>" + dueN + "</strong> ready to look at again</span>" : "") + "</div></div>";
+    h += '<div class="row"><button class="btn primary" data-action="start-mix">Start</button>' +
+      (dueN + 6 > ROUNDS.short.n ? '<button class="btn ghost" data-action="start-long">Longer round \u00b7 ' + ROUNDS.long.n + " questions</button>" : "") + "</div></section>";
     if (ui.homeMsg) h += '<p class="hintbox" role="status">' + esc(ui.homeMsg) + "</p>";
 
     h += '<section style="display:flex;flex-direction:column;gap:12px"><h3>Pick a topic</h3>';
-    h += '<p class="legend"><span><i class="lrn"></i>Learning = right once</span><span><i></i>Secure = right again on another day</span></p><ul class="units">';
+    h += '<p class="legend"><span><i class="lrn"></i>Learning = right once</span><span><i></i>Secure = right again in a later round</span></p><ul class="units">';
     C.units.forEach(function (u) {
       var items = C.items.filter(function (it) { return it.unit === u.id; });
       var m = items.filter(function (it) { return mastered(it.id); }).length;
@@ -586,7 +615,7 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
     var ok = res.filter(function (a) { return a.ok; }).length;
     var missed = res.filter(function (a) { return !a.ok; });
     var timeUp = elapsed() >= MAX_SECS && res.length < sess.queue.length;
-    var h = '<div class="wrap"><header class="masthead"><p class="eyebrow">' + (timeUp ? "Ten minutes — time’s up" : "Round complete") + "</p><h1>" +
+    var h = '<div class="wrap"><header class="masthead"><p class="eyebrow">' + (timeUp ? "Time’s up for this round" : "Round complete") + "</p><h1>" +
       (ok === res.length ? "A perfect round." : ok / res.length >= 0.7 ? "Lovely work tonight." : "Good effort — that’s how words stick.") + "</h1></header>";
     h += '<p class="score">' + ok + " <span>/ " + res.length + " right</span></p>";
     var nowSecure = res.filter(function (a) { return sess.before[a.id] < 3 && box(a.id) >= 3; }).length;
@@ -594,7 +623,7 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
     if (nowSecure || nowLearning) {
       h += '<p class="gain">' + (nowSecure ? "<strong>" + nowSecure + "</strong> now secure" : "") + (nowSecure && nowLearning ? " · " : "") +
         (nowLearning ? "<strong>" + nowLearning + "</strong> now learning" : "") +
-        (nowLearning ? '<br><span class="muted small">Get the learning ones right again on another day and they become secure.</span>' : "") + "</p>";
+        (nowLearning ? '<br><span class="muted small">Get the learning ones right again in a later round and they become secure.</span>' : "") + "</p>";
     }
     h += skyline(true);
     if (missed.length) {
@@ -604,15 +633,16 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
         h += "<li><span>" + (it.type === "card" ? "<strong>" + esc(it.word) + "</strong> — " + esc(it.def) : fmtQ(it.q, null)) + "</span>" +
           (it.type === "card" ? "" : '<span class="a">✓ ' + esc(correctText(it)) + "</span>") + "</li>";
       });
-      h += '</ul><p class="muted small">These will come back in a day or two — with a different question on the same skill.</p></section>';
+      h += '</ul><p class="muted small">These come back next time you play — with a different question on the same skill.</p></section>';
     }
-    h += '<div class="row"><button class="btn primary" data-action="home">Back to the rooftops</button></div></div>';
+    h += '<div class="row"><button class="btn primary" data-action="start-mix">Another round</button>' +
+      '<button class="btn ghost" data-action="home">Back to the rooftops</button></div></div>';
     return h;
   }
 
   /* ── parent (Japanese) ── */
   function summarize() {
-    var m = ymd(monday());
+    var m = ymd(weekStart(new Date())); m = addDays(-((new Date(today()) - new Date(m)) / 86400000) - 21);  // 直近4週の始まり（月曜）
     var since = addDays(-30);
     var week = S.sessions.filter(function (s) { return s.d >= m; });
     var mins = Math.round(week.reduce(function (a, s) { return a + (s.secs || 0); }, 0) / 60);
@@ -630,7 +660,7 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
     var missed = Object.keys(S.items).filter(function (id) { return byId[id] && S.items[id].wrong > 0; })
       .sort(function (a, b) { return S.items[b].wrong - S.items[a].wrong || S.items[a].right - S.items[b].right; })
       .slice(0, 8).map(function (id) { return { id: id, wrong: S.items[id].wrong, right: S.items[id].right }; });
-    return { days: daysThisWeek(), sessions: week.length, minutes: mins, accuracy: wt ? Math.round(wr / wt * 100) : null, skills: skills, missed: missed };
+    return { days: weeksLit(), sessions: week.length, minutes: mins, accuracy: wt ? Math.round(wr / wt * 100) : null, skills: skills, missed: missed };
   }
 
   function exportText() {
@@ -641,8 +671,8 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
     var sm = summarize();
     var h = '<div class="wrap"><div class="row" style="justify-content:space-between"><button class="btn ghost small" data-action="home">← 戻る</button></div>' + storageWarn();
     h += '<header class="masthead"><p class="eyebrow">For parents</p><h1>保護者メモ</h1><p>学校の宿題とは別の、自主練習用です。宿題の答えはここに入れないでください（学校方針：宿題は本人だけで・親は直さない）。</p></header>';
-    h += '<section class="panel"><h3>今週</h3><div class="stats">' +
-      '<div class="stat"><b>' + sm.days + '</b><span>取り組んだ日</span></div>' +
+    h += '<section class="panel"><h3>直近4週</h3><div class="stats">' +
+      '<div class="stat"><b>' + sm.days + '</b><span>取り組んだ週（7週中）</span></div>' +
       '<div class="stat"><b>' + sm.sessions + '</b><span>回数</span></div>' +
       '<div class="stat"><b>' + sm.minutes + '</b><span>合計（分）</span></div>' +
       '<div class="stat"><b>' + (sm.accuracy == null ? "—" : sm.accuracy + "%") + '</b><span>正答率</span></div></div></section>';
@@ -654,7 +684,7 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
       var s = sm.skills[k], p = Math.round(s.right / s.total * 100);
       h += '<div class="skill-row"><span>' + esc(C.skills[k].ja) + '</span><div class="bar"><i class="' + (p < 60 ? "low" : p < 80 ? "mid" : "hi") + '" style="width:' + p + '%"></i></div><span class="num">' + p + "% · " + s.right + "/" + s.total + "</span></div>";
     });
-    h += '<p class="note">60%未満（赤）は要練習。間違えた技能は、次回に同じ技能の別の問題が自動で出ます。</p></section>';
+    h += '<p class="note">60%未満（赤）は要練習。間違えた技能は、次の回に同じ技能の別の問題が自動で出ます。毎日やらなくても、週1回でも、日本でまとめてやっても、続きから積み上がります。</p></section>';
 
     h += '<section class="panel"><h3>よく間違える問題</h3>';
     if (!sm.missed.length) h += '<p class="muted">まだありません。</p>';
@@ -689,8 +719,8 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
     var el = e.target.closest("[data-action]");
     if (!el || el.disabled) return;
     var a = el.getAttribute("data-action");
-    if (a === "start-mix") startSession(buildMix());
-    else if (a === "start-unit") startSession(buildUnit(el.getAttribute("data-unit")));
+    if (a === "start-mix" || a === "start-long") { setRound(a === "start-long" ? "long" : "short"); startSession(buildMix()); }
+    else if (a === "start-unit") { setRound("short"); startSession(buildUnit(el.getAttribute("data-unit"))); }
     else if (a === "stop") finish();
     else if (a === "home") { sess = null; ui = {}; go("home"); }
     else if (a === "parent") { ui = {}; go("parent"); }

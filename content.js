@@ -7,12 +7,25 @@
  *  - unit.status: "next"=来週の予習 / "review"=やった単元の復習 / "bank"=いつでも
  */
 window.RE_CONTENT = {
-  version: "2026-09-13",
+  version: "2026-09-23",
 
   units: [
     {
-      id: "m05-blog",
+      id: "m06-speech",
       status: "next",
+      when: "This week · 21 Sep",
+      title: "Speech and character",
+      ja: "話し方から人物を読む（今週の授業）",
+      source: "Michaelmas W5 ニュースレター（9/18）：Rooftoppers の人物分析＝直接話法・間接話法から人物像を推測 → 自分で人物描写を書く",
+      speak: [
+        "Think of someone in a book you are reading. Say one line they might say out loud — in their voice.",
+        "Say a sentence of direct speech (“…”), then say the same thing as reported speech (He said that …).",
+        "Describe a character in two sentences without using the words kind, nice or mean. Show it instead."
+      ]
+    },
+    {
+      id: "m05-blog",
+      status: "review",
       when: "Week of 14 Sep",
       title: "Polishing a travel blog",
       ja: "旅行ブログの推敲（来週の授業の予習）",
@@ -78,6 +91,7 @@ window.RE_CONTENT = {
     "character-vocab": { en: "Character words", ja: "人物を表す語彙" },
     "inference": { en: "Reading between the lines", ja: "行間を読む（推論）" },
     "paraphrase": { en: "Paraphrasing & notes", ja: "言い換え・メモ・要約" },
+    "speech": { en: "Speech in stories", ja: "話法（直接話法・間接話法）" },
     "spelling": { en: "Spelling", ja: "スペリング" },
     "grammar": { en: "Grammar terms", ja: "文法用語" }
   },
@@ -594,6 +608,112 @@ window.RE_CONTENT = {
       q: "Which sentence is in the present perfect?",
       options: ["I visited Paris twice.", "I have visited Paris twice.", "I am visiting Paris.", "I will visit Paris."], a: 1,
       why: "The present perfect uses have/has + past participle (have visited). It links the past to now.",
-      hint: "have / has ＋ 過去分詞" }
+      hint: "have / has ＋ 過去分詞" },
+    /* ───────── m06-speech : 直接話法・間接話法と人物像（W5） ───────── */
+    { id: "sp-dr-01", unit: "m06-speech", skill: "speech", type: "mc",
+      q: "Which line of direct speech is punctuated correctly?",
+      options: [
+        "“I\u2019m not going back” said Ada.",
+        "“I\u2019m not going back,” said Ada.",
+        "“I\u2019m not going back.” said Ada.",
+        "I\u2019m not going back, “said Ada.”"
+      ], a: 1,
+      why: "The spoken words sit inside the inverted commas and end with a comma, then the reporting clause (said Ada) finishes with a full stop.",
+      hint: "話した言葉の終わりはカンマ → 引用符を閉じる → said Ada." },
+    { id: "sp-dr-02", unit: "m06-speech", skill: "speech", type: "mc",
+      q: "In a story, what should you do when a different character starts to speak?",
+      options: [
+        "Start a new line",
+        "Use a capital letter for every word",
+        "Put it in brackets",
+        "Write it all in one long paragraph"
+      ], a: 0,
+      why: "New speaker, new line. It shows the reader straight away that someone else is talking.",
+      hint: "話す人が変わったら改行" },
+    { id: "sp-dr-03", unit: "m06-speech", skill: "speech", type: "mc",
+      q: "Change to reported speech: “I will find the key tomorrow,” said Tom.",
+      options: [
+        "Tom said that he would find the key the next day.",
+        "Tom said that I will find the key tomorrow.",
+        "Tom said, “I will find the key tomorrow.”",
+        "Tom will find the key tomorrow, he said today."
+      ], a: 0,
+      why: "In reported speech the inverted commas go, “I” becomes “he”, “will” becomes “would”, and “tomorrow” becomes “the next day”.",
+      hint: "間接話法は「人・時制・時の言葉」がずれる" },
+    { id: "sp-dr-04", unit: "m06-speech", skill: "speech", type: "mc",
+      q: "Which sentence is REPORTED (indirect) speech?",
+      options: [
+        "“Where have you been?” asked Miss Eliot.",
+        "Miss Eliot asked where he had been.",
+        "“Where have you been?”",
+        "Miss Eliot said: “Where have you been?”"
+      ], a: 1,
+      why: "Reported speech tells us what was said without the exact words or inverted commas.",
+      hint: "引用符がなく、内容だけ伝えているのはどれ？" },
+    { id: "sp-dr-05", unit: "m06-speech", skill: "speech", type: "mc",
+      q: "Which reporting word shows the character is unsure of herself?",
+      options: ["boomed", "faltered", "declared", "announced"], a: 1,
+      why: "“Faltered” means the voice wavered and stopped. The others are loud and confident.",
+      hint: "falter＝ためらう・言いよどむ" },
+    { id: "sp-dr-06", unit: "m06-speech", skill: "speech", type: "mc",
+      q: "Which sentence keeps the speech but adds an action in the middle?",
+      options: [
+        "“Wait,” she whispered, pressing her hand flat against the door, “I can hear something.”",
+        "“Wait I can hear something,” she whispered.",
+        "She whispered and pressed her hand against the door.",
+        "“Wait. I can hear something. She whispered.”"
+      ], a: 0,
+      why: "Splitting the speech and adding an action in the middle slows the moment down and shows what the character is doing.",
+      hint: "セリフを二つに割って、間に動作を入れている文" },
+    { id: "sp-in-01", unit: "m06-speech", skill: "inference", type: "mc",
+      q: "“Do be careful — that ladder is older than I am,” he said, hovering at the bottom of it. What does this suggest about him?",
+      options: [
+        "He is worried about her and wants to keep her safe.",
+        "He is angry with her.",
+        "He wants the ladder for himself.",
+        "He is bored."
+      ], a: 0,
+      why: "The warning and the way he hovers at the bottom both show concern, even though the writer never says “worried”.",
+      hint: "言葉と動作の両方からわかる気持ち" },
+    { id: "sp-in-02", unit: "m06-speech", skill: "inference", type: "mc",
+      q: "“I don\u2019t need any help. I never have.” Which pair of words fits this character best?",
+      options: ["proud and independent", "shy and gentle", "cheerful and silly", "kind and patient"], a: 0,
+      why: "Refusing help, and saying she never needed it, shows independence and pride.",
+      hint: "助けを断り、昔からそうだと言っている" },
+    { id: "sp-in-03", unit: "m06-speech", skill: "inference", type: "mc",
+      q: "A character always answers questions with one short word. What might a reader guess?",
+      options: [
+        "They are hiding something, or they don\u2019t want to talk.",
+        "They cannot speak English.",
+        "They are the hero of the story.",
+        "They are very old."
+      ], a: 0,
+      why: "How much a character says — not only what they say — tells the reader about them.",
+      hint: "短く答える＝何か言いたくない" },
+    { id: "sp-ch-01", unit: "m06-speech", skill: "sentence-craft", type: "mc",
+      q: "Which sentence SHOWS that a teacher is strict, without saying so?",
+      options: [
+        "Mrs Hale was very strict indeed.",
+        "Mrs Hale waited by the door, counting each late arrival in her notebook.",
+        "Mrs Hale was a strict teacher who was strict about rules.",
+        "Everyone said Mrs Hale was strict."
+      ], a: 1,
+      why: "The action — waiting and writing down every latecomer — lets the reader work it out. Showing beats telling.",
+      hint: "strict と言わずに、行動で見せている文" },
+    { id: "sp-ch-02", unit: "m06-speech", skill: "sentence-craft", type: "mc",
+      q: "Which detail tells a reader the MOST about a character?",
+      options: [
+        "She had brown hair.",
+        "She was eleven years old.",
+        "She kept a spare shoelace in her pocket, in case anyone needed one.",
+        "She lived in a house."
+      ], a: 2,
+      why: "A small, odd, specific detail suggests a whole personality — here, someone practical who looks after other people.",
+      hint: "その人らしさが想像できるのはどれ？" },
+    { id: "sp-ch-03", unit: "m06-speech", skill: "word-choice", type: "mc",
+      q: "Choose the best word: She did not shout back. She simply looked at him, ___ , until he stopped talking.",
+      options: ["cheerfully", "steadily", "loudly", "sleepily"], a: 1,
+      why: "“Steadily” shows a calm, unmoving stare — which is why he stops. The others fight the mood of the sentence.",
+      hint: "じっと動じない様子を表す言葉" }
   ]
 };
