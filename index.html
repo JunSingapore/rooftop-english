@@ -488,7 +488,8 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
       var m = items.filter(function (it) { return mastered(it.id); }).length;
       var l = items.filter(function (it) { return learning(it.id); }).length;
       var pct = function (n) { return items.length ? Math.round(n / items.length * 100) : 0; };
-      var label = u.status === "next" ? "Coming up · " + u.when : u.status === "review" ? "Look back · " + u.when : "Anytime";
+      var label = u.status === "next" ? (/^This week/i.test(u.when) ? u.when : "Coming up · " + u.when)
+        : u.status === "review" ? "Look back · " + u.when : "Anytime";
       h += '<li class="unit"><div class="t"><span class="chip ' + u.status + '">' + esc(label) + '</span><span class="name">' + esc(u.title) + '</span><span class="ja">' + esc(u.ja) + "</span></div>";
       h += '<div class="meter"><span>' + m + " secure · " + l + ' learning <span class="of">/ ' + items.length + '</span></span><div class="bar two"><i style="width:' + pct(m) + '%"></i><i class="lrn" style="width:' + pct(l) + '%"></i></div></div>';
       h += '<button class="btn ghost small" data-action="start-unit" data-unit="' + esc(u.id) + '">Practise</button></li>';
