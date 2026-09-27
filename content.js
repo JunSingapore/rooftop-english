@@ -7,13 +7,26 @@
  *  - unit.status: "next"=来週の予習 / "review"=やった単元の復習 / "bank"=いつでも
  */
 window.RE_CONTENT = {
-  version: "2026-09-23",
+  version: "2026-09-27",
 
   units: [
     {
-      id: "m06-speech",
+      id: "m07-description",
       status: "next",
-      when: "This week · 21 Sep",
+      when: "This week · 28 Sep",
+      title: "Writing a character description",
+      ja: "人物描写文を書く（直接・間接の人物描写）",
+      source: "Michaelmas W6 ニュースレター（9/25）：直接／間接の人物描写の違いを学習 → 来週は Rooftoppers の登場人物の人物描写文を計画して書く（語彙選び・描写表現・直接と間接のバランス）",
+      speak: [
+        "Choose a character from a book. Say ONE sentence that tells us what they are like (direct), then TWO sentences that show it through what they do or say (indirect).",
+        "Describe someone’s hands, shoes or bag in one sentence so that it hints at their personality.",
+        "Say a plan for a character description out loud: appearance → actions → speech → how others react to them."
+      ]
+    },
+    {
+      id: "m06-speech",
+      status: "review",
+      when: "Week of 21 Sep",
       title: "Speech and character",
       ja: "話し方から人物を読む（今週の授業）",
       source: "Michaelmas W5 ニュースレター（9/18）：Rooftoppers の人物分析＝直接話法・間接話法から人物像を推測 → 自分で人物描写を書く",
@@ -92,6 +105,7 @@ window.RE_CONTENT = {
     "inference": { en: "Reading between the lines", ja: "行間を読む（推論）" },
     "paraphrase": { en: "Paraphrasing & notes", ja: "言い換え・メモ・要約" },
     "speech": { en: "Speech in stories", ja: "話法（直接話法・間接話法）" },
+    "characterisation": { en: "Direct & indirect characterisation", ja: "直接・間接の人物描写" },
     "spelling": { en: "Spelling", ja: "スペリング" },
     "grammar": { en: "Grammar terms", ja: "文法用語" }
   },
@@ -714,6 +728,112 @@ window.RE_CONTENT = {
       q: "Choose the best word: She did not shout back. She simply looked at him, ___ , until he stopped talking.",
       options: ["cheerfully", "steadily", "loudly", "sleepily"], a: 1,
       why: "“Steadily” shows a calm, unmoving stare — which is why he stops. The others fight the mood of the sentence.",
-      hint: "じっと動じない様子を表す言葉" }
+      hint: "じっと動じない様子を表す言葉" },
+    /* ───────── m07-description : 人物描写文を書く（W6） ───────── */
+    { id: "cd-di-01", unit: "m07-description", skill: "characterisation", type: "mc",
+      q: "Which sentence is DIRECT characterisation?",
+      options: [
+        "Leo was a generous boy.",
+        "Leo gave the last biscuit to his little sister without a word.",
+        "Leo’s friends always saved him a seat.",
+        "“Take mine,” said Leo, pushing his umbrella across."
+      ], a: 0,
+      why: "Direct characterisation TELLS the reader the trait (generous). The others SHOW it through actions, speech or how others treat him.",
+      hint: "性格を言葉でそのまま言っている文" },
+    { id: "cd-di-02", unit: "m07-description", skill: "characterisation", type: "mc",
+      q: "Which sentence is INDIRECT characterisation?",
+      options: [
+        "Nina was nervous.",
+        "Nina was the most nervous girl in the class.",
+        "Nina checked her bag for the third time, then checked it again.",
+        "Everyone knew Nina was a nervous person."
+      ], a: 2,
+      why: "Checking her bag again and again lets the reader work out that she is nervous — the writer never says it.",
+      hint: "nervous と言わずに行動で見せている文" },
+    { id: "cd-di-03", unit: "m07-description", skill: "characterisation", type: "mc",
+      q: "Writers show a character indirectly through several things. Which one is NOT one of them?",
+      options: [
+        "What the character does",
+        "What the character says",
+        "How other characters react to them",
+        "The page number the character appears on"
+      ], a: 3,
+      why: "Actions, speech, thoughts, appearance and other people’s reactions all reveal character. The page number tells us nothing.",
+      hint: "人物像の手がかりにならないもの" },
+    { id: "cd-di-04", unit: "m07-description", skill: "characterisation", type: "mc",
+      q: "Why do good writers use BOTH direct and indirect characterisation?",
+      options: [
+        "A clear statement gives the reader a starting point, and the details make it believable.",
+        "Because it makes the description longer.",
+        "Because direct characterisation is always wrong.",
+        "So the reader does not have to think."
+      ], a: 0,
+      why: "One direct line sets up the idea; actions and speech then prove it and let the reader feel they discovered it.",
+      hint: "言い切り＋証拠のバランス" },
+    { id: "cd-di-05", unit: "m07-description", skill: "characterisation", type: "mc",
+      q: "“When the old man dropped his coins, the other shoppers stepped round them. Maya knelt down and picked up every one.” What does this show about Maya?",
+      options: [
+        "She is kind and notices others.",
+        "She wants the coins for herself.",
+        "She is in a hurry.",
+        "She is shy."
+      ], a: 0,
+      why: "The contrast with the other shoppers makes her kindness stand out. Comparing a character with others is a strong indirect technique.",
+      hint: "ほかの人との違いで見せている" },
+    { id: "cd-vc-01", unit: "m07-description", skill: "character-vocab", type: "mc",
+      q: "A character never gives up, even when things go wrong. Which word fits best?",
+      options: ["determined", "careless", "timid", "fussy"], a: 0,
+      why: "“Determined” means you keep going towards a goal however hard it gets.",
+      hint: "あきらめない性格" },
+    { id: "cd-vc-02", unit: "m07-description", skill: "character-vocab", type: "mc",
+      q: "Which word describes someone who is quick to notice small details?",
+      options: ["observant", "stubborn", "reckless", "gloomy"], a: 0,
+      why: "“Observant” means good at noticing things. It is a useful trait word for curious, clever characters.",
+      hint: "よく気がつく" },
+    { id: "cd-vc-03", unit: "m07-description", skill: "word-choice", type: "mc",
+      q: "Choose the verb that shows the character is tired and unhappy: He ___ up the stairs to bed.",
+      options: ["trudged", "skipped", "raced", "bounced"], a: 0,
+      why: "“Trudged” means walked slowly and heavily. The verb does the work, so you don’t need to add “tiredly”.",
+      hint: "重い足取りで歩く" },
+    { id: "cd-sc-01", unit: "m07-description", skill: "sentence-craft", type: "mc",
+      q: "Which sentence uses appearance to hint at personality?",
+      options: [
+        "She had a coat.",
+        "Her coat was buttoned to the chin, and not one hair was out of place.",
+        "She wore clothes every day.",
+        "Her coat was blue and her shoes were black."
+      ], a: 1,
+      why: "The neat details suggest someone careful and perhaps strict. Plain facts about colour tell us nothing about who she is.",
+      hint: "見た目から性格が想像できる文" },
+    { id: "cd-sc-02", unit: "m07-description", skill: "sentence-craft", type: "mc",
+      q: "What is a sensible ORDER when planning a character description?",
+      options: [
+        "First impression → appearance → actions and speech → a closing line that sums them up",
+        "Closing line → appearance → first impression",
+        "Only a list of trait words",
+        "Speech only, with no description"
+      ], a: 0,
+      why: "Moving from a first impression to details and then a strong ending helps the reader build a clear picture step by step.",
+      hint: "第一印象 → 細部 → しめくくり" },
+    { id: "cd-sc-03", unit: "m07-description", skill: "sentence-craft", type: "mc",
+      q: "Which is the strongest closing sentence for a character description?",
+      options: [
+        "That is the end of my description.",
+        "He was a boy.",
+        "Most people saw only the scruffy jacket; few noticed how carefully he listened.",
+        "I have now described him."
+      ], a: 2,
+      why: "It sums up the character AND leaves the reader with something to think about — the difference between how he looks and who he is.",
+      hint: "読後に印象が残るしめくくり" },
+    { id: "cd-sc-04", unit: "m07-description", skill: "sentence-craft", type: "mc",
+      q: "Improve this sentence: “She was very, very angry.” Which is best?",
+      options: [
+        "She was very, very, very angry.",
+        "Her jaw tightened, and she folded the letter into a smaller and smaller square.",
+        "She was angry and cross and mad.",
+        "She was really angry indeed."
+      ], a: 1,
+      why: "Instead of piling up “very”, show the anger with a physical detail and an action the reader can picture.",
+      hint: "very を重ねず、体の様子と動作で見せる" }
   ]
 };
