@@ -7,13 +7,26 @@
  *  - unit.status: "next"=来週の予習 / "review"=やった単元の復習 / "bank"=いつでも
  */
 window.RE_CONTENT = {
-  version: "2026-09-27",
+  version: "2026-10-02",
 
   units: [
     {
-      id: "m07-description",
+      id: "m08-action",
       status: "next",
-      when: "This week · 28 Sep",
+      when: "This week · 5 Oct",
+      title: "Action writing & themes",
+      ja: "アクション場面を書く／テーマとジャンルの違い",
+      source: "Michaelmas W7 ニュースレター（10/2）：今週は Rooftoppers のテーマを学習（テーマとジャンルの違い・本文から例を探す）→ 来週は単元のまとめにアクション文（パリの屋根の上を駆ける場面）を書く",
+      speak: [
+        "Describe someone jumping from one rooftop to another in THREE short sentences. Make every verb a strong one.",
+        "Say one long sentence that builds tension, then one very short sentence that breaks it. (e.g. “…, and then — silence.”)",
+        "Name a book you know. Say its genre in one word, then say one theme in a full sentence."
+      ]
+    },
+    {
+      id: "m07-description",
+      status: "review",
+      when: "Week of 28 Sep",
       title: "Writing a character description",
       ja: "人物描写文を書く（直接・間接の人物描写）",
       source: "Michaelmas W6 ニュースレター（9/25）：直接／間接の人物描写の違いを学習 → 来週は Rooftoppers の登場人物の人物描写文を計画して書く（語彙選び・描写表現・直接と間接のバランス）",
@@ -106,6 +119,8 @@ window.RE_CONTENT = {
     "paraphrase": { en: "Paraphrasing & notes", ja: "言い換え・メモ・要約" },
     "speech": { en: "Speech in stories", ja: "話法（直接話法・間接話法）" },
     "characterisation": { en: "Direct & indirect characterisation", ja: "直接・間接の人物描写" },
+    "action-writing": { en: "Action writing", ja: "アクション場面の書き方" },
+    "theme": { en: "Theme & genre", ja: "テーマとジャンル" },
     "spelling": { en: "Spelling", ja: "スペリング" },
     "grammar": { en: "Grammar terms", ja: "文法用語" }
   },
@@ -729,6 +744,97 @@ window.RE_CONTENT = {
       options: ["cheerfully", "steadily", "loudly", "sleepily"], a: 1,
       why: "“Steadily” shows a calm, unmoving stare — which is why he stops. The others fight the mood of the sentence.",
       hint: "じっと動じない様子を表す言葉" },
+    /* ───────── m08-action : アクション文・テーマとジャンル（W7） ───────── */
+    { id: "ac-th-01", unit: "m08-action", skill: "theme", type: "mc",
+      q: "What is the difference between a GENRE and a THEME?",
+      options: [
+        "Genre is the type of story; theme is the big idea or message underneath it.",
+        "Genre is the main character; theme is the setting.",
+        "They mean the same thing.",
+        "Genre is the title; theme is the last chapter."
+      ], a: 0,
+      why: "Genre answers “What kind of story is it?” (adventure, mystery, fantasy). Theme answers “What is it really about?” (hope, belonging, courage).",
+      hint: "ジャンル＝話の種類／テーマ＝根っこにある大きな考え" },
+    { id: "ac-th-02", unit: "m08-action", skill: "theme", type: "mc",
+      q: "Which of these is a GENRE, not a theme?",
+      options: ["friendship", "never giving up", "adventure", "belonging"], a: 2,
+      why: "“Adventure” describes the kind of story. Friendship, never giving up and belonging are ideas a story explores — themes.",
+      hint: "話の『種類』を表すもの" },
+    { id: "ac-th-03", unit: "m08-action", skill: "theme", type: "mc",
+      q: "A boy’s dog goes missing. Everyone says it has gone for good, but he puts up new posters every single day. Which THEME does this show most clearly?",
+      options: ["hope", "science fiction", "the city", "mystery"], a: 0,
+      why: "Refusing to give up when others say it is impossible is about hope. Science fiction and mystery are genres; the city is a setting.",
+      hint: "あきらめずに信じ続ける気持ち" },
+    { id: "ac-th-04", unit: "m08-action", skill: "theme", type: "mc",
+      q: "How do you best support a theme when you write about a book?",
+      options: [
+        "Say the theme, then give an example of an event or line from the book that shows it.",
+        "Just name the theme — no evidence is needed.",
+        "Copy out the whole chapter.",
+        "List all the characters’ names."
+      ], a: 0,
+      why: "A theme is a claim. Like any claim, it needs evidence: a moment, an action or a quotation that shows it.",
+      hint: "テーマ＋本文からの証拠" },
+    { id: "ac-vb-01", unit: "m08-action", skill: "action-writing", type: "mc",
+      q: "Choose the strongest verb: She ___ across the gap between the two roofs.",
+      options: ["went", "leapt", "moved", "got"], a: 1,
+      why: "“Leapt” shows the size and energy of the jump. Went, moved and got are weak, general verbs.",
+      hint: "勢いよく跳ぶ様子" },
+    { id: "ac-vb-02", unit: "m08-action", skill: "action-writing", type: "mc",
+      q: "Choose the verb that shows the character nearly fell: His foot ___ on the wet tiles.",
+      options: ["skidded", "stood", "rested", "stayed"], a: 0,
+      why: "“Skidded” gives a sudden loss of grip — the reader feels the danger.",
+      hint: "すべってヒヤッとする動き" },
+    { id: "ac-sc-01", unit: "m08-action", skill: "action-writing", type: "mc",
+      q: "Which version gives the most SPEED and tension?",
+      options: [
+        "He ran and then he jumped and then he landed and then he kept running.",
+        "He ran. He jumped. He landed — just.",
+        "He was running quite fast at the time, and after a while he decided to jump.",
+        "Running was something he did, and jumping too."
+      ], a: 1,
+      why: "Short sentences make the reader read quickly, like the action. “— just” adds a moment of danger.",
+      hint: "短い文を続けるとスピードが出る" },
+    { id: "ac-sc-02", unit: "m08-action", skill: "action-writing", type: "mc",
+      q: "Why might a writer use one LONG sentence followed by a very SHORT one in an action scene?",
+      options: [
+        "The long sentence builds up the moment, and the short one hits hard, like a sudden stop.",
+        "Because short sentences are always wrong.",
+        "To make the paragraph look bigger.",
+        "It makes no difference to the reader."
+      ], a: 0,
+      why: "Changing sentence length controls the pace. A short sentence after a long one feels like a jolt.",
+      hint: "長い文でためて、短い文でドン" },
+    { id: "ac-sc-03", unit: "m08-action", skill: "action-writing", type: "mc",
+      q: "Which sentence uses the SENSES best to put the reader on the rooftop?",
+      options: [
+        "It was a roof.",
+        "The wind tugged at her sleeves and the slates rattled under her feet.",
+        "She was on a roof that was high.",
+        "There were some roofs nearby."
+      ], a: 1,
+      why: "Feeling the wind and hearing the slates rattle lets the reader experience the scene, not just be told about it.",
+      hint: "風を感じる・音が聞こえる文" },
+    { id: "ac-sc-04", unit: "m08-action", skill: "action-writing", type: "mc",
+      q: "Which opening is best for an action paragraph?",
+      options: [
+        "This is a story about some people on a roof.",
+        "Without warning, the ledge crumbled beneath his feet.",
+        "Once upon a time there was a man.",
+        "I am going to tell you what happened."
+      ], a: 1,
+      why: "Starting in the middle of the action (and with a fronted adverbial) grabs the reader at once.",
+      hint: "いきなり事件の真ん中から始める" },
+    { id: "ac-pu-01", unit: "m08-action", skill: "punctuation", type: "mc",
+      q: "Which punctuation adds a dramatic pause before the surprise? “She reached the edge and looked down ___ nothing but a long, dark drop.”",
+      options: ["a dash (—)", "a question mark (?)", "brackets ( )", "an apostrophe (’)"], a: 0,
+      why: "A dash makes the reader pause, then delivers the surprise. It is a favourite tool in action writing.",
+      hint: "一呼吸おいて驚きを見せる記号" },
+    { id: "ac-wc-01", unit: "m08-action", skill: "action-writing", type: "mc",
+      q: "Which adverbial makes the moment feel most urgent? “___, she grabbed the chimney pot.”",
+      options: ["At the very last second", "On a Tuesday", "Quite slowly", "After lunch"], a: 0,
+      why: "“At the very last second” tells us she nearly didn’t make it — that is where the tension comes from.",
+      hint: "ギリギリ間に合った感じ" },
     /* ───────── m07-description : 人物描写文を書く（W6） ───────── */
     { id: "cd-di-01", unit: "m07-description", skill: "characterisation", type: "mc",
       q: "Which sentence is DIRECT characterisation?",
