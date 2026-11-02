@@ -378,6 +378,8 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
     function from(units) { return rank(C.items.filter(function (it) { return units.indexOf(it.unit) >= 0; })); }
     b.addFrom(from(nextU), Math.ceil(LIMIT * 0.4), "new");
     b.addFrom(from(revU), Math.ceil(LIMIT * 0.2), "new");
+    // 読解の伸ばしどころ（英語の先生のフィードバック 2026-11）を毎回2問ほど
+    b.addFrom(from(["reading-skills"]), Math.ceil(LIMIT * 0.15), "new");
     b.addFrom(from(["spelling"]), Math.ceil(LIMIT * 0.17), "new");
     b.addFrom(from(["grammar"]), Math.ceil(LIMIT * 0.1), "new");
     b.addFrom(rank(C.items), LIMIT, "new");
