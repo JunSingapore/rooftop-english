@@ -239,10 +239,12 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
 <div id="app"></div>
 
 <script src="content.js"></script>
+<script src="learn-cloud.js"></script>
 <script>
 (function () {
   "use strict";
   var C = window.RE_CONTENT;
+  var LC = window.LearnCloud || null;   // クラウド保存（無くても学習はできる）
   var app = document.getElementById("app");
   if (!C) { app.innerHTML = '<div class="wrap"><p>問題データ（content.js）が読み込めませんでした。</p></div>'; return; }
 
@@ -473,6 +475,7 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
       (away === null ? "Pick a round whenever you have time \u2014 no need to come every day."
         : away >= 7 ? "Welcome back. Everything you practised is still here, waiting."
           : thisWeek ? "This week’s window is lit. Another round?" : "A round or two this week keeps the words sticking.") + "</p></header>";
+    if (LC) h += LC.summaryHTML();   // 連続週・今週あと何日・ポイント（一番目立つ所）
     h += skyline(false);
     h += '<p class="week-note">' + weeksLit() + " of the last 7 weeks" + (away ? " \u00b7 last round " + away + (away === 1 ? " day ago" : " days ago") : "") + "</p>";
     h += '<section class="today" aria-label="Practice"><div style="display:flex;flex-direction:column;gap:8px">';
@@ -497,8 +500,9 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
       h += '<button class="btn ghost small" data-action="start-unit" data-unit="' + esc(u.id) + '">Practise</button></li>';
     });
     h += "</ul></section>";
+    if (LC) h += LC.rewardsHTML();   // ごほうびの一覧と申請
     h += '<footer class="foot"><button class="linkish" data-action="parent">保護者メモ（For parents）</button><span class="small muted">Questions updated ' + esc(C.version) + "</span></footer>";
-    return h + storageWarn() + "</div>";
+    return h + (LC ? LC.badgeHTML() : "") + storageWarn() + "</div>";
   }
   function storageWarn() {
     return storageOk ? "" : '<p class="note" role="alert">⚠ この端末では記録を保存できていません（プライベートブラウズ等）。通常のタブで開き直してください。</p>';
@@ -590,6 +594,7 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
       S.follow = S.follow.filter(function (f) { return !(f.skill === cur.follow.skill && f.from === cur.follow.from); });
     }
     record(cur.id, ok);
+    if (LC) LC.answer(cur.id, ok);
     sess.answers[sess.i] = { id: cur.id, ok: ok, pick: extra };
   }
 
@@ -602,12 +607,15 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
     sess.i++; ui = {}; render(); window.scrollTo(0, 0);
   }
 
-  function finish() {
+  function finish(stopped) {
     var res = sess.answers.filter(Boolean);
+    // 最後までやった回（時間切れ終了も含む・途中でやめた回は数えない）＝学習日
+    if (LC && res.length && (!stopped || elapsed() >= MAX_SECS)) LC.round(sess.mode === "mix" ? "mix" : sess.unit);
     if (res.length) {
       S.sessions.push({ d: today(), t: sess.start, unit: sess.mode === "mix" ? "mix" : sess.unit, secs: elapsed(), res: res.map(function (a) { return [a.id, a.ok ? 1 : 0]; }) });
       if (S.sessions.length > 300) S.sessions.shift();
       save();
+      if (LC) LC.saveState();
     }
     go(res.length ? "end" : "home");
   }
@@ -705,8 +713,9 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
     C.units.forEach(function (u) { h += "<li><strong>" + esc(u.title) + "</strong>：" + esc(u.source) + "</li>"; });
     h += '</ul><p class="note">問題はすべて自作の例文です（本の本文は使っていません）。毎週金曜のニュースレターを読んだあと、AIが「来週の予習」を差し替えます。</p></section>';
 
+    if (LC) h += LC.panelHTML();
     h += '<section class="panel"><h3>記録の書き出し・バックアップ</h3>';
-    h += '<p class="note">記録はこのiPadの中だけに保存されます。週に1回「コピー」して Claude に貼ると、つまずきを次の週の問題に反映します。機種変更・データ消去の前にもコピーして保存してください。</p>';
+    h += '<p class="note">記録はこのiPadに保存されます（登録済みならクラウドにも送られます）。週に1回「コピー」して Claude に貼ると、つまずきを次の週の問題に反映します。機種変更・データ消去の前にもコピーして保存してください。</p>';
     h += '<textarea id="exp" readonly>' + esc(exportText()) + "</textarea>";
     h += '<div class="row"><button class="btn primary small" data-action="copy">コピー</button>' + (ui.msg ? '<span class="msg">' + esc(ui.msg) + "</span>" : "") + "</div>";
     h += '<p class="note">バックアップから戻す：下に貼り付けて「読み込む」。</p><textarea id="imp" placeholder="ここに貼り付け"></textarea>';
@@ -724,7 +733,7 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
     var a = el.getAttribute("data-action");
     if (a === "start-mix" || a === "start-long") { setRound(a === "start-long" ? "long" : "short"); startSession(buildMix()); }
     else if (a === "start-unit") { setRound("short"); startSession(buildUnit(el.getAttribute("data-unit"))); }
-    else if (a === "stop") finish();
+    else if (a === "stop") finish(true);
     else if (a === "home") { sess = null; ui = {}; go("home"); }
     else if (a === "parent") { ui = {}; go("parent"); }
     else if (a === "hint") { ui.hint = true; render(); }
@@ -755,13 +764,14 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
         if (!obj || obj.app !== "rooftop-english" || !validState(obj.state)) throw new Error("bad");
         var prev = S;
         S = normalize(obj.state); save();
+        if (LC) LC.saveState();
         if (!storageOk) { S = prev; ui = { imsg: "保存できませんでした。記録は元のままです。" }; render(); return; }
         ui = { imsg: "読み込みました" }; render();
       } catch (err) { ui.imsg = "読み込めませんでした。コピーした文字列を全部そのまま貼ってください。"; render(); }
     }
     else if (a === "reset") { ui.resetArmed = true; render(); }
     else if (a === "reset-cancel") { ui.resetArmed = false; render(); }
-    else if (a === "reset-confirm") { S = fresh(); save(); ui = { msg: "" }; go("home"); }
+    else if (a === "reset-confirm") { S = fresh(); S.resetAt = Date.now(); save(); if (LC) LC.saveState(); ui = { msg: "" }; go("home"); }
   });
 
   setInterval(function () {
@@ -771,6 +781,8 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
   }, 1000);
 
   try { localStorage.setItem(KEY + "-probe", "1"); localStorage.removeItem(KEY + "-probe"); } catch (e) { storageOk = false; }
+  if (LC) LC.init({ app: "rooftop-english", getState: function () { return S; }, canApply: function () { return view !== "quiz"; },
+    setState: function (s) { S = normalize(s); save(); if (view !== "quiz") render(); } });
   render();
 })();
 </script>
