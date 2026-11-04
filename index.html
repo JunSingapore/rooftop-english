@@ -112,7 +112,7 @@ p { margin: 0; }
 
 .units { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .unit {
-  display: grid; grid-template-columns: 1fr 150px auto; gap: 8px 20px; align-items: center;
+  display: grid; grid-template-columns: 1fr 230px auto; gap: 8px 20px; align-items: center;
   padding: 18px 0; border-top: 1px solid var(--line);
 }
 .unit:last-child { border-bottom: 1px solid var(--line); }
@@ -133,6 +133,15 @@ p { margin: 0; }
 .legend i { display: inline-block; width: 18px; height: 6px; border-radius: 3px; background: var(--lamp); margin-right: 6px; vertical-align: middle; }
 .legend i.lrn { opacity: 0.4; }
 .gain { font-size: 18px; }
+.meter strong { color: var(--ink); }
+.learned { font-size: 13px; color: var(--lamp-ink); white-space: nowrap; }
+.alltried { font-size: 14px; color: var(--good); font-weight: 700; }
+.glance { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 20px 26px; display: grid; grid-template-columns: 1fr 1.6fr 1fr; gap: 14px 24px; font-variant-numeric: tabular-nums; }
+.glance .g-row { display: flex; flex-direction: column; gap: 4px; font-size: 17px; }
+.glance .alltried { margin-top: 2px; }
+.recent { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; font-size: 16px; }
+.recent li { display: flex; justify-content: space-between; gap: 12px; }
+@media (max-width: 700px) { .glance { grid-template-columns: 1fr; } }
 @media (max-width: 600px) {
   .unit { grid-template-columns: 1fr auto; }
   .unit .meter { grid-column: 1 / -1; grid-row: 2; }
@@ -320,8 +329,6 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
     var r = rec(id); if (!r) return false;
     return r.last === today() && roundsSince(r) < (GAP[r.box] || 1);
   }
-  function mastered(id) { var r = rec(id); return !!(r && r.box >= 3); }   // 別の回に2回正解
-  function learning(id) { var r = rec(id); return !!(r && r.box === 2); }  // 1回正解・未確認
   function box(id) { var r = rec(id); return r ? r.box : 0; }
   function correctText(it) { return it.type === "card" ? it.word : it.options[it.a]; }
   function promptText(it) { return it.type === "card" ? it.word + " — " + it.def : it.q; }
@@ -464,6 +471,44 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
     return '<svg class="skyline" viewBox="0 0 700 142" role="img" aria-label="The last seven weeks. A window lights up in every week you practised.">' + out + "</svg>";
   }
 
+  /* ── 見ただけで分かる数字：tried（1回でも出た）・right（いま正解の状態＝最後に正解）・left（まだ出ていない） ── */
+  function unitStats(uid) {
+    var items = C.items.filter(function (it) { return it.unit === uid; });
+    var t = 0, r = 0, s = 0;
+    items.forEach(function (it) { var x = rec(it.id); if (x && x.seen) { t++; if (x.box >= 2) r++; if (x.box >= 3) s++; } });
+    return { total: items.length, tried: t, right: r, left: items.length - t, secure: s };
+  }
+  function statLine(st) {
+    return '<strong>' + st.tried + "</strong> of " + st.total + " tried · <strong>" + st.right + "</strong> right · <strong>" + st.left + "</strong> left";
+  }
+  function learnedTag(st) { return st.secure ? ' <span class="learned">⭐ ' + st.secure + " learned</span>" : ""; }
+  function allTried(st) { return st.total && !st.left ? '<span class="alltried">All tried! ✨ Missed ones will come back</span>' : ""; }
+  function sessDate(d) { var p = d.split("-"); return +p[2] + " " + MONTHS[+p[1] - 1]; }
+  function glanceHTML(nextU) {
+    var t = today(), todays = S.sessions.filter(function (s) { return s.d === t; });
+    var tq = 0, tr = 0; todays.forEach(function (s) { tq += s.res.length; s.res.forEach(function (r) { tr += r[1]; }); });
+    var h = '<section class="glance" aria-label="At a glance">';
+    h += '<div class="g-row"><p class="eyebrow">Today</p><p>' + (todays.length
+      ? '✓ <strong>' + tq + "</strong> questions · <strong>" + tr + "</strong> right" + (todays.length > 1 ? ' <span class="muted">(' + todays.length + " rounds)</span>" : "")
+      : '<span class="muted">Not yet today</span>') + "</p></div>";
+    if (nextU) {
+      var st = unitStats(nextU.id);
+      h += '<div class="g-row"><p class="eyebrow">This week’s topic · ' + esc(nextU.title) + "</p><p>" + statLine(st) + learnedTag(st) + "</p>" + allTried(st) + "</div>";
+    }
+    var last = S.sessions.slice(-3).reverse();
+    h += '<div class="g-row"><p class="eyebrow">Last 3 rounds</p>';
+    if (!last.length) h += '<p class="muted">No rounds yet</p>';
+    else {
+      h += '<ul class="recent">';
+      last.forEach(function (s) {
+        var ok = s.res.reduce(function (a, r) { return a + r[1]; }, 0);
+        h += "<li><span>" + esc(sessDate(s.d)) + "</span><span><strong>" + ok + "</strong> / " + s.res.length + " right</span></li>";
+      });
+      h += "</ul>";
+    }
+    return h + "</div></section>";
+  }
+
   /* ── home ── */
   function homeHTML() {
     var dueN = C.items.filter(function (it) { return isDue(it.id); }).length;
@@ -478,6 +523,7 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
     if (LC) h += LC.summaryHTML();   // 連続週・今週あと何日・ポイント（一番目立つ所）
     h += skyline(false);
     h += '<p class="week-note">' + weeksLit() + " of the last 7 weeks" + (away ? " \u00b7 last round " + away + (away === 1 ? " day ago" : " days ago") : "") + "</p>";
+    h += glanceHTML(nextU);
     h += '<section class="today" aria-label="Practice"><div style="display:flex;flex-direction:column;gap:8px">';
     h += '<p class="eyebrow">Ready for you</p><h2>' + (nextU ? esc(nextU.title) + " + a mix" : "A mixed round") + "</h2>";
     h += '<div class="facts"><span><strong>' + ROUNDS.short.n + "</strong> questions, about <strong>10</strong> minutes</span>" +
@@ -487,16 +533,14 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
     if (ui.homeMsg) h += '<p class="hintbox" role="status">' + esc(ui.homeMsg) + "</p>";
 
     h += '<section style="display:flex;flex-direction:column;gap:12px"><h3>Pick a topic</h3>';
-    h += '<p class="legend"><span><i class="lrn"></i>Learning = right once</span><span><i></i>Secure = right again in a later round</span></p><ul class="units">';
+    h += '<p class="legend"><span><i></i>Right</span><span><i class="lrn"></i>Tried, not right yet</span><span>⭐ learned = right again in a later round</span></p><ul class="units">';
     C.units.forEach(function (u) {
-      var items = C.items.filter(function (it) { return it.unit === u.id; });
-      var m = items.filter(function (it) { return mastered(it.id); }).length;
-      var l = items.filter(function (it) { return learning(it.id); }).length;
-      var pct = function (n) { return items.length ? Math.round(n / items.length * 100) : 0; };
+      var st = unitStats(u.id);
+      var pct = function (n) { return st.total ? Math.round(n / st.total * 100) : 0; };
       var label = u.status === "next" ? (/^This week/i.test(u.when) ? u.when : "Coming up · " + u.when)
         : u.status === "review" ? "Look back · " + u.when : "Anytime";
       h += '<li class="unit"><div class="t"><span class="chip ' + u.status + '">' + esc(label) + '</span><span class="name">' + esc(u.title) + '</span><span class="ja">' + esc(u.ja) + "</span></div>";
-      h += '<div class="meter"><span>' + m + " secure · " + l + ' learning <span class="of">/ ' + items.length + '</span></span><div class="bar two"><i style="width:' + pct(m) + '%"></i><i class="lrn" style="width:' + pct(l) + '%"></i></div></div>';
+      h += '<div class="meter"><span>' + statLine(st) + learnedTag(st) + '</span><div class="bar two"><i style="width:' + pct(st.right) + '%"></i><i class="lrn" style="width:' + pct(st.tried - st.right) + '%"></i></div>' + allTried(st) + "</div>";
       h += '<button class="btn ghost small" data-action="start-unit" data-unit="' + esc(u.id) + '">Practise</button></li>';
     });
     h += "</ul></section>";
