@@ -7,12 +7,25 @@
  *  - unit.status: "next"=来週の予習 / "review"=やった単元の復習 / "bank"=いつでも
  */
 window.RE_CONTENT = {
-  version: "2026-11-02",
+  version: "2026-11-07",
 
   units: [
     {
-      id: "m10-haiku",
+      id: "m12-shakespeare",
       status: "next",
+      when: "Week of 11 Nov",
+      title: "Settings & Shakespeare’s life",
+      ja: "物語の舞台（setting）を描く／シェイクスピアの生涯と伝記（biography）の書き方",
+      source: "Michaelmas W11 ニュースレター（11/5・/news/13508）：架空の舞台の自由作文を仕上げ → Hamlet の学習開始。まずシェイクスピア本人について学び、翌週に伝記を書く",
+      speak: [
+        "Close your eyes and describe a place you have made up. Use one sound, one smell and one thing you can touch.",
+        "Tell someone at home three facts about Shakespeare’s life in time order. Start with “In 1564 …” and use “Later” and “Finally”.",
+        "Say one FACT and one OPINION about Shakespeare. Can the listener tell which is which?"
+      ]
+    },
+    {
+      id: "m10-haiku",
+      status: "review",
       when: "Week of 26 Oct",
       title: "Haiku & poem games",
       ja: "俳句（5・7・5）を作る／リレー詩・単語リストの詩",
@@ -26,7 +39,7 @@ window.RE_CONTENT = {
     {
       id: "m11-hamlet",
       status: "next",
-      when: "Later this term",
+      when: "Week of 11 Nov",
       title: "Meet Hamlet",
       ja: "Hamlet の予習（あらすじ・登場人物・シェイクスピアの言葉・劇の用語・テーマ）",
       source: "Year 6 Long Term Plan 2026~27：Michaelmas 後半＝古典文学（Hamlet の抜粋）の予習。本文は使わず、有名な短い句だけ",
@@ -184,7 +197,10 @@ window.RE_CONTENT = {
     "drama-terms": { en: "Drama words", ja: "劇の用語（独白・傍白・ト書き）" },
     "context-clues": { en: "Word meaning from context", ja: "文脈から言葉の意味を推測する" },
     "text-structure": { en: "How a text is built", ja: "文章の組み立て（構成）を見抜く" },
-    "sequencing": { en: "Putting events in order", ja: "出来事を順番に並べる" }
+    "sequencing": { en: "Putting events in order", ja: "出来事を順番に並べる" },
+    "setting-writing": { en: "Describing a setting", ja: "舞台（場所・時・雰囲気）を描く" },
+    "biography": { en: "Writing a biography", ja: "伝記の書き方（三人称・過去形・時系列・事実）" },
+    "shakespeare-life": { en: "Shakespeare’s life", ja: "シェイクスピアの生涯" }
   },
 
   items: [
@@ -1394,6 +1410,146 @@ window.RE_CONTENT = {
         "It is the morning."
       ], a: 1,
       why: "A good inference needs evidence. Doing the same small thing again and again is a classic sign of nerves. The other details are just facts about the scene.",
-      hint: "推論には「証拠」が要る。緊張が表れている行動は？" }
+      hint: "推論には「証拠」が要る。緊張が表れている行動は？" },
+    /* ───────── m12-shakespeare : setting-writing ───────── */
+    { id: "sk-st-01", unit: "m12-shakespeare", skill: "setting-writing", type: "mc",
+      q: "Which sentence describes a SETTING best?",
+      options: [
+        "The forest was nice.",
+        "Mist curled between the black trees, and somewhere an owl called twice.",
+        "We went into the forest after lunch.",
+        "The forest had trees in it."
+      ], a: 1,
+      why: "A strong setting sentence lets the reader SEE and HEAR the place. “Mist curled” and “an owl called” build a picture and a mood. The others only tell us the place exists.",
+      hint: "目と耳で場所が浮かぶのはどれ？" },
+    { id: "sk-st-02", unit: "m12-shakespeare", skill: "setting-writing", type: "mc",
+      q: "“The floating market glowed with paper lanterns, and the air smelled of grilled corn and rain.” Which TWO senses does the writer use?",
+      options: ["sight and smell", "hearing and touch", "taste and hearing", "touch and sight"], a: 0,
+      why: "“Glowed with paper lanterns” is something you see; “smelled of grilled corn” is something you smell.",
+      hint: "glowed（光る）と smelled（におう）" },
+    { id: "sk-st-03", unit: "m12-shakespeare", skill: "setting-writing", type: "mc",
+      q: "Which setting sentence creates a SPOOKY mood?",
+      options: [
+        "Sunlight danced on the bright blue pool.",
+        "The old door groaned, and cold air crept along the empty corridor.",
+        "Children laughed in the busy playground.",
+        "The café was warm and full of chatter."
+      ], a: 1,
+      why: "A groaning door, cold air that “creeps” and an empty corridor all make the reader feel uneasy. The others feel cheerful and safe.",
+      hint: "mood＝雰囲気。不安になるのはどれ？" },
+    { id: "sk-st-04", unit: "m12-shakespeare", skill: "setting-writing", type: "mc",
+      q: "Which sentence uses PERSONIFICATION to describe a setting?",
+      options: [
+        "The wind howled and tugged at the tents like an angry giant.",
+        "The wind was very strong.",
+        "There were six tents in the field.",
+        "It was a windy night in October."
+      ], a: 0,
+      why: "Howling and tugging are things a person or creature does — the wind is given human-like actions. That is personification (and “like an angry giant” is a simile too).",
+      hint: "風が人のように「何かをしている」のは？" },
+    { id: "sk-st-05", unit: "m12-shakespeare", skill: "setting-writing", type: "mc",
+      q: "A good setting tells the reader WHERE, WHEN and what it FEELS like. Which sentence gives all three?",
+      options: [
+        "The castle was big.",
+        "At midnight, the frozen castle courtyard was silent except for the crunch of a guard’s boots.",
+        "Midnight is very late.",
+        "A guard walked."
+      ], a: 1,
+      why: "WHERE: the castle courtyard. WHEN: midnight. FEEL: frozen and silent, with one sharp sound. The others give only one piece, or none.",
+      hint: "場所・時・雰囲気の3つがそろっているのは？" },
+
+    /* ───────── m12-shakespeare : shakespeare-life ───────── */
+    { id: "sk-lf-01", unit: "m12-shakespeare", skill: "shakespeare-life", type: "mc",
+      q: "In which town was William Shakespeare born?",
+      options: ["London", "Stratford-upon-Avon", "Oxford", "Edinburgh"], a: 1,
+      why: "Shakespeare was born in Stratford-upon-Avon, a market town in the middle of England. He later worked in London but returned to Stratford at the end of his life.",
+      hint: "Avon という川のそばの町" },
+    { id: "sk-lf-02", unit: "m12-shakespeare", skill: "shakespeare-life", type: "mc",
+      q: "Shakespeare was born in 1564. About how long ago is that?",
+      options: ["about 160 years ago", "about 460 years ago", "about 1,000 years ago", "about 60 years ago"], a: 1,
+      why: "2026 − 1564 = 462, so about 460 years ago — in the time of Queen Elizabeth I.",
+      hint: "2026 − 1564 を計算してみよう" },
+    { id: "sk-lf-03", unit: "m12-shakespeare", skill: "shakespeare-life", type: "mc",
+      q: "What did Shakespeare do in London?",
+      options: [
+        "He was a king.",
+        "He was an actor and wrote plays and poems.",
+        "He was a ship’s captain.",
+        "He was a doctor."
+      ], a: 1,
+      why: "Shakespeare acted in a company of players and wrote plays for them, as well as poems. He became one of the owners of the company and of its theatre.",
+      hint: "劇団で何をしていた？" },
+    { id: "sk-lf-04", unit: "m12-shakespeare", skill: "shakespeare-life", type: "mc",
+      q: "What was the name of the famous round theatre in London where many of Shakespeare’s plays were performed?",
+      options: ["The Globe", "The Palace", "The Colosseum", "The Opera House"], a: 0,
+      why: "The Globe Theatre was built in 1599 by Shakespeare’s company. A modern copy of it stands near the same spot in London today.",
+      hint: "globe＝地球・球" },
+    { id: "sk-lf-05", unit: "m12-shakespeare", skill: "shakespeare-life", type: "mc",
+      q: "About how many plays did Shakespeare write?",
+      options: ["about 5", "about 38", "about 200", "about 1,000"], a: 1,
+      why: "Around 37 to 39 plays are counted as his (experts disagree about a few), plus 154 short poems called sonnets.",
+      hint: "40 弱" },
+    { id: "sk-lf-06", unit: "m12-shakespeare", skill: "shakespeare-life", type: "mc",
+      q: "Shakespeare’s plays are often sorted into three main kinds. Which list is correct?",
+      options: [
+        "comedies, tragedies and histories",
+        "novels, poems and letters",
+        "cartoons, films and songs",
+        "fairy tales, myths and fables"
+      ], a: 0,
+      why: "Comedies usually end happily, tragedies end with the death of the hero, and histories tell stories of English kings. Hamlet is a tragedy.",
+      hint: "Hamlet は tragedy（悲劇）" },
+
+    /* ───────── m12-shakespeare : biography ───────── */
+    { id: "sk-bi-01", unit: "m12-shakespeare", skill: "biography", type: "mc",
+      q: "A biography is …",
+      options: [
+        "the story of a real person’s life, written by someone else",
+        "a made-up story about a hero",
+        "the story of your own life, written by you",
+        "a poem about nature"
+      ], a: 0,
+      why: "A BIOgraphy is written by another person. If you write about your OWN life, it is an AUTObiography.",
+      hint: "auto＝自分。自分で書くのは autobiography" },
+    { id: "sk-bi-02", unit: "m12-shakespeare", skill: "biography", type: "mc",
+      q: "Which sentence is written correctly for a biography (third person, past tense)?",
+      options: [
+        "I am born in Stratford in 1564.",
+        "Shakespeare was born in Stratford in 1564.",
+        "Shakespeare is born in Stratford in 1564.",
+        "You were born in Stratford in 1564."
+      ], a: 1,
+      why: "Biographies use the third person (he / she / the person’s name) and the past tense (was, wrote, moved).",
+      hint: "he/she＋過去形" },
+    { id: "sk-bi-03", unit: "m12-shakespeare", skill: "biography", type: "mc",
+      q: "Which of these is an OPINION, not a fact?",
+      options: [
+        "Shakespeare died in 1616.",
+        "Shakespeare wrote Hamlet.",
+        "Shakespeare is the greatest writer who ever lived.",
+        "Shakespeare had three children."
+      ], a: 2,
+      why: "“The greatest writer who ever lived” is what some people think — it cannot be proved. The others can be checked in records. A biography is mostly facts; opinions should be clearly shown (“Many people believe …”).",
+      hint: "証明できないのはどれ？" },
+    { id: "sk-bi-04", unit: "m12-shakespeare", skill: "biography", type: "mc",
+      q: "Biographies are usually told in time order. Which word or phrase is a TIME CONNECTIVE?",
+      options: ["Later in his life,", "Because", "However,", "For example,"], a: 0,
+      why: "“Later in his life” moves the reader forward in time. “Because” gives a reason, “However” shows a contrast, and “For example” gives an example.",
+      hint: "時の流れを示すのは？（Later・After that・Finally など）" },
+    { id: "sk-bi-05", unit: "m12-shakespeare", skill: "biography", type: "mc",
+      q: "Put these in the right order for a biography: (A) He moved to London to work in the theatre. (B) He was born in Stratford. (C) He returned to Stratford, where he died. (D) He married and had three children.",
+      options: ["B, D, A, C", "A, B, C, D", "B, A, C, D", "D, B, A, C"], a: 0,
+      why: "Born (B) → married with children (D) → moved to London (A) → returned and died (C). A biography usually follows the person’s life from beginning to end.",
+      hint: "生まれた → 結婚 → ロンドン → 帰郷" },
+    { id: "sk-bi-06", unit: "m12-shakespeare", skill: "biography", type: "mc",
+      q: "Which is the best OPENING sentence for a biography of Shakespeare?",
+      options: [
+        "Shakespeare was a man.",
+        "William Shakespeare, one of the most famous playwrights in the world, was born in Stratford-upon-Avon in 1564.",
+        "I am going to tell you about Shakespeare now.",
+        "He died in 1616."
+      ], a: 1,
+      why: "A strong opening says WHO the person is, WHY they matter, and WHEN and WHERE they were born — all in one sentence. Starting with the death date would be the end, not the beginning.",
+      hint: "誰・なぜ有名・いつどこで生まれたか" }
   ]
 };
