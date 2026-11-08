@@ -249,11 +249,16 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
 
 <script src="content.js"></script>
 <script src="learn-cloud.js"></script>
+<script src="think.js"></script>
+<script src="coach.js"></script>
 <script>
 (function () {
   "use strict";
   var C = window.RE_CONTENT;
   var LC = window.LearnCloud || null;   // クラウド保存（無くても学習はできる）
+  var CO = window.Coach || null;        // 学習メソッド（自信の申告・考える問い・ボス）。無くても学習はできる
+  var TB = window.THINK_BANK || [];
+  if (CO) CO.injectCSS();
   var app = document.getElementById("app");
   if (!C) { app.innerHTML = '<div class="wrap"><p>問題データ（content.js）が読み込めませんでした。</p></div>'; return; }
 
@@ -274,7 +279,9 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
   function normalize(s) {
     s.items = s.items || {}; s.days = s.days || []; s.sessions = s.sessions || [];
     s.follow = (s.follow || []).filter(function (f) { return f && typeof f === "object" && f.skill; });
-    s.spoken = s.spoken || 0; s.round = s.round || 0; return s;
+    s.spoken = s.spoken || 0; s.round = s.round || 0;
+    if (CO) CO.ensure(s);
+    return s;
   }
   // バックアップ読み込み時の検証（壊れたデータで記録を上書きしない）
   function validState(s) {
@@ -342,7 +349,7 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
       // 同じ技能の「別の問題」で次回確認する予約（元の問題そのものは翌日の復習で出る）
       var sk = byId[id].skill;
       if (!S.follow.some(function (f) { return f.skill === sk && f.from === id; })) S.follow.push({ skill: sk, from: id });
-      if (S.follow.length > 8) S.follow.shift();
+      if (S.follow.length > 8) { if (CO) CO.trimFollow(S.follow, function (f) { return f.from; }, S, 8); else S.follow.shift(); }
     }
     S.items[id] = r;
     if (S.days.indexOf(today()) < 0) { S.days.push(today()); if (S.days.length > 400) S.days.shift(); }
@@ -406,18 +413,38 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
     b.addFollowups(skills, 3);
     b.addFrom(rank(items), LIMIT, "new");
     if (!b.picked.length) return null;
-    return { mode: "unit", unit: uid, queue: shuffle(b.picked) };
+    var q = shuffle(b.picked);
+    // 混ぜて出す：別の単元の、出しどきが来た既習の問題を最大2問、4問目以降に差し込む（同じ技能を優先・未習は混ぜない）
+    if (q.length >= 6) {
+      var mix = rank(C.items.filter(function (it) { var r = rec(it.id); return it.unit !== uid && r && r.seen && isDue(it.id) && !b.has(it.id); }));
+      mix.sort(function (x, y) { return (skills.indexOf(x.skill) >= 0 ? 0 : 1) - (skills.indexOf(y.skill) >= 0 ? 0 : 1); });
+      var slots = []; for (var k = 3; k < q.length; k++) slots.push(k);
+      shuffle(slots).slice(0, Math.min(2, mix.length)).forEach(function (k, j) { q[k] = { id: mix[j].id, why: "mixin" }; });
+    }
+    return { mode: "unit", unit: uid, queue: q };
+  }
+  // ボスバトル：今週（月曜から）答えた問題から最大5問
+  function bossPoolNow() { return CO ? CO.bossPool(S.sessions, CO.weekKey(new Date()), function (id) { return !!byId[id]; }) : []; }
+  function buildBoss() {
+    if (!CO || !CO.bossOpen(new Date())) return null;
+    var pool = bossPoolNow();
+    if (pool.length < CO.BOSS_MIN) return null;
+    return { mode: "boss", unit: "boss", wk: CO.weekKey(new Date()), queue: shuffle(pool.slice(0, CO.BOSS_N).map(function (id) { return { id: id, why: "boss" }; })) };
   }
 
   function setRound(kind) { var r = ROUNDS[kind] || ROUNDS.short; LIMIT = r.n; MAX_SECS = r.secs; }
 
   function startSession(s) {
     if (!s) { ui = { homeMsg: "This topic is done for today — every question has been answered. Come back tomorrow!" }; go("home"); return; }
+    var boss = s.mode === "boss";
     var u = unitById[s.unit];
     var prompts = (u && u.speak) || [];
-    s.speak = prompts.length ? prompts[S.spoken % prompts.length] : null;
-    S.round = (S.round || 0) + 1; save();
+    s.speak = prompts.length && !boss ? prompts[S.spoken % prompts.length] : null;
+    if (!boss) { S.round = (S.round || 0) + 1; save(); }   // ボスは回に数えない
     s.i = 0; s.answers = []; s.start = Date.now(); s.phase = "items";
+    // 自信の申告は1回に2問（選択式だけ）／考える問いは3回に2回・真ん中あたりで1問
+    s.conf = CO && !boss ? CO.confSlots(s.queue.length, 2, function (i) { return byId[s.queue[i].id].type !== "card"; }) : [];
+    s.thinkAt = CO && !boss && TB.length && CO.thinkThisRound(S.round) ? Math.max(2, Math.floor(s.queue.length / 2)) : -1;
     s.before = {}; s.queue.forEach(function (p) { s.before[p.id] = box(p.id); });
     sess = s; ui = {}; go("quiz");
   }
@@ -521,7 +548,9 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
         : away >= 7 ? "Welcome back. Everything you practised is still here, waiting."
           : thisWeek ? "This week’s window is lit. Another round?" : "A round or two this week keeps the words sticking.") + "</p></header>";
     if (LC) h += LC.summaryHTML();   // 連続週・今週あと何日・ポイント（一番目立つ所）
+    if (CO) h += CO.bossCardHTML(S, bossPoolNow().length, new Date());   // 金〜日だけ
     h += skyline(false);
+    if (CO) h += CO.stickerShelfHTML(S);
     h += '<p class="week-note">' + weeksLit() + " of the last 7 weeks" + (away ? " \u00b7 last round " + away + (away === 1 ? " day ago" : " days ago") : "") + "</p>";
     h += glanceHTML(nextU);
     h += '<section class="today" aria-label="Practice"><div style="display:flex;flex-direction:column;gap:8px">';
@@ -577,9 +606,10 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
       h += '<div class="row"><button class="btn primary" data-action="spoke">I said it!</button><button class="btn ghost" data-action="skip-speak">Skip</button></div></div>';
       return h + "</div></div>";
     }
+    if (sess.phase === "think") return h + CO.thinkHTML(ui.think.e, ui.think.st, { last: isLast() && !sess.speak }) + "</div></div>";
     var cur = sess.queue[sess.i], it = byId[cur.id];
     var sk = C.skills[it.skill] || { en: it.skill };
-    var tag = cur.why === "review" ? " · Back again" : cur.why.indexOf("followup") === 0 ? " · One more try at this skill" : "";
+    var tag = cur.why === "review" ? " · Back again" : cur.why.indexOf("followup") === 0 ? " · One more try at this skill" : cur.why === "mixin" ? " · Mixed in from another topic" : cur.why === "boss" ? " · Boss of the week" : "";
     h += '<p class="eyebrow">' + esc(sk.en) + esc(tag) + "</p>";
     h += it.type === "card" ? cardHTML(it) : mcHTML(it, cur);
     return h + "</div></div>";
@@ -598,13 +628,16 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
         else if (k === ans.k) { cls += " wrong"; mark = '<span class="mark" aria-label="your answer">✗</span>'; }
         else cls += " dim";
       }
+      if (!ans && ui.pendingK === k) cls += " chosen";
       h += '<button class="' + cls + '" data-action="choose" data-k="' + k + '"' + (ans ? " disabled" : "") + '><span class="key">' + "ABCD".charAt(k) + '</span><span class="txt">' + esc(it.options[oi]) + "</span>" + mark + "</button>";
     });
     h += "</div>";
+    if (!ans && confSlot()) h += ui.pendingK != null ? CO.confButtonsHTML("pick-conf") : '<p class="small muted">Pick an answer — then Olive will ask how sure you are.</p>';
     if (ans) {
       h += '<div class="feedback ' + (ans.ok ? "ok" : "no") + '" role="status"><p class="fb-title">' + esc(ans.title) + "</p>";
       if (!ans.ok) h += "<p>The answer is <strong>" + esc(it.options[it.a]) + "</strong>.</p>";
       h += "<p>" + esc(it.why) + "</p>";
+      if (CO && ans.conf) h += CO.confNote(ans.conf, ans.ok);
       if (it.hint) h += '<p class="small muted">ヒント：' + esc(it.hint) + "</p>";
       h += '<button class="btn primary" data-action="next">' + (isLast() ? "Finish" : "Next") + " →</button></div>";
     } else if (it.hint) {
@@ -632,18 +665,40 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
   var PRAISE = ["Spot on!", "Exactly right.", "Nicely done.", "Yes — well spotted.", "Perfect."];
   var NOT = ["Not quite.", "Close, but no.", "Not this time."];
 
-  function answer(ok, extra) {
+  function confSlot() { return !!(CO && sess && sess.conf && sess.conf.indexOf(sess.i) >= 0); }
+  function answer(ok, extra, conf) {
     var cur = sess.queue[sess.i];
+    sess.answers[sess.i] = { id: cur.id, ok: ok, pick: extra, conf: conf || null };
+    if (sess.mode === "boss") {
+      // ボス：箱・ポイントには入れない。間違えた問題だけ、同じ技能の別の問題で次の回に確認
+      var sk = byId[cur.id].skill;
+      if (!ok && !S.follow.some(function (f) { return f.skill === sk && f.from === cur.id; })) { S.follow.push({ skill: sk, from: cur.id }); CO.trimFollow(S.follow, function (f) { return f.from; }, S, 8); }
+      save(); return;
+    }
     if (cur.follow) {
       S.follow = S.follow.filter(function (f) { return !(f.skill === cur.follow.skill && f.from === cur.follow.from); });
     }
     record(cur.id, ok);
     if (LC) LC.answer(cur.id, ok);
-    sess.answers[sess.i] = { id: cur.id, ok: ok, pick: extra };
+    if (CO && ok) CO.clearSure(S, cur.id);
+    if (conf === "sure" && !ok) {   // 自信ありで間違えた＝思い込みかも → 次の回の確認を先頭に（押し出さない印も付ける）
+      CO.markSure(S, cur.id);
+      var mine = S.follow.filter(function (f) { return f.from === cur.id; });
+      S.follow = mine.concat(S.follow.filter(function (f) { return f.from !== cur.id; }));
+      save();
+    }
+  }
+  function grade(k, conf) {
+    var cur = sess.queue[sess.i], it = byId[cur.id];
+    var ok = cur.order[k] === it.a;
+    ui.answered = { k: k, ok: ok, conf: conf || null, title: (ok ? PRAISE : NOT)[Math.floor(Math.random() * (ok ? PRAISE.length : NOT.length))] };
+    answer(ok, it.options[cur.order[k]], conf);
+    render();
   }
 
-  function advance() {
+  function advance(afterThink) {
     if (elapsed() >= MAX_SECS) { finish(); return; }   // 10分を過ぎたら話す課題も出さずに終わる
+    if (!afterThink && maybeThink()) return;
     if (isLast()) {
       if (sess.speak && sess.phase !== "speak") { sess.phase = "speak"; ui = {}; render(); window.scrollTo(0, 0); return; }
       finish(); return;
@@ -651,12 +706,45 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
     sess.i++; ui = {}; render(); window.scrollTo(0, 0);
   }
 
+  // 考える問い：決めた位置（または最後の問題）のあとに1問
+  function maybeThink() {
+    if (!CO || sess.thinkAt < 0 || sess.thought || sess.phase !== "items") return false;
+    if (sess.i + 1 < sess.thinkAt && !isLast()) return false;
+    sess.thought = true;
+    var recent = [], ok = {}, last = sess.answers[sess.i];
+    for (var k = sess.i; k >= 0; k--) if (sess.answers[k]) recent.push(byId[sess.answers[k].id].skill);
+    if (last && last.ok) ok[byId[last.id].skill] = 1;
+    var e = CO.pickAny(TB, S, { recent: recent, ok: ok });
+    if (!e) return false;
+    sess.phase = "think"; ui = { think: { e: e, st: {} } }; render(); window.scrollTo(0, 0);
+    return true;
+  }
+  function thinkPick(k) {
+    var t = ui.think; if (!t || t.st.pick != null || !t.st.order) return;
+    t.st.pick = k;
+    var oi = t.st.order[k], ok = t.e.a == null ? null : oi === t.e.a;
+    CO.thinkDone(S, t.e, ok);
+    sess.think = [t.e.id, ok === null ? null : ok ? 1 : 0];   // 箱・ポイントには入れない
+    save(); render();
+  }
+  function thinkNext() { sess.phase = "items"; ui = {}; advance(true); }
+
   function finish(stopped) {
     var res = sess.answers.filter(Boolean);
+    if (sess.mode === "boss") {
+      // 最後までやったボスだけ、その週のシールを記録（ポイント・学習日には入れない）
+      if (res.length === sess.queue.length || (!stopped && res.length)) sess.bossResult = CO.bossRecord(S, sess.wk, res.filter(function (a) { return a.ok; }).length, sess.queue.length);
+      save(); if (LC) LC.saveState();
+      sess.phase = "items"; go(res.length ? "end" : "home"); return;
+    }
     // 最後までやった回（時間切れ終了も含む・途中でやめた回は数えない）＝学習日
     if (LC && res.length && (!stopped || elapsed() >= MAX_SECS)) LC.round(sess.mode === "mix" ? "mix" : sess.unit);
     if (res.length) {
-      S.sessions.push({ d: today(), t: sess.start, unit: sess.mode === "mix" ? "mix" : sess.unit, secs: elapsed(), res: res.map(function (a) { return [a.id, a.ok ? 1 : 0]; }) });
+      var logS = { d: today(), t: sess.start, unit: sess.mode === "mix" ? "mix" : sess.unit, secs: elapsed(), res: res.map(function (a) { return [a.id, a.ok ? 1 : 0]; }) };
+      var cf = res.filter(function (a) { return a.conf; }).map(function (a) { return [a.id, a.conf, a.ok ? 1 : 0]; });
+      if (cf.length) logS.conf = cf;
+      if (sess.think) logS.think = sess.think;
+      S.sessions.push(logS);
       if (S.sessions.length > 300) S.sessions.shift();
       save();
       if (LC) LC.saveState();
@@ -665,8 +753,27 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
   }
 
   /* ── end ── */
+  function bossEndHTML(res, ok) {
+    var b = sess.bossResult, perfect = b && ok === sess.queue.length;
+    var h = '<div class="wrap"><header class="masthead"><p class="eyebrow">Boss of the week</p><h1>' + (perfect ? "Champion! You beat the boss." : "Boss battle done.") + "</h1></header>";
+    h += '<p class="score">' + ok + " <span>/ " + res.length + " right</span></p>";
+    if (b) h += '<div class="coach-win">' + CO.sticker(!!b.perfect, 96) + "<p><strong>" + (b.perfect ? "Champion sticker" : "Boss sticker") + "</strong> for this week</p></div>";
+    h += CO.bubble("olive", "happy", "<p>" + (perfect ? "Brilliant — you remembered this week’s English." : "Well fought! The ones you missed will come back in your next round. Want another go at the boss?") + "</p>");
+    var missed = res.filter(function (a) { return !a.ok; });
+    if (missed.length) {
+      h += '<section style="display:flex;flex-direction:column;gap:12px"><h3>Worth another look</h3><ul class="recap">';
+      missed.forEach(function (a) {
+        var it = byId[a.id];
+        h += "<li><span>" + (it.type === "card" ? "<strong>" + esc(it.word) + "</strong> — " + esc(it.def) : fmtQ(it.q, null)) + "</span>" + (it.type === "card" ? "" : '<span class="a">✓ ' + esc(correctText(it)) + "</span>") + "</li>";
+      });
+      h += "</ul></section>";
+    }
+    h += '<div class="row"><button class="btn primary" data-action="start-boss">Try the boss again</button><button class="btn ghost" data-action="home">Back to the rooftops</button></div></div>';
+    return h;
+  }
   function endHTML() {
     var res = sess.answers.filter(Boolean);
+    if (sess.mode === "boss") return bossEndHTML(res, res.filter(function (a) { return a.ok; }).length);
     var ok = res.filter(function (a) { return a.ok; }).length;
     var missed = res.filter(function (a) { return !a.ok; });
     var timeUp = elapsed() >= MAX_SECS && res.length < sess.queue.length;
@@ -696,6 +803,21 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
   }
 
   /* ── parent (Japanese) ── */
+  function coachParentHTML() {
+    var since = addDays(-30), sureWrong = {}, notRight = 0, confN = 0, thinkN = 0, thinkOk = 0;
+    S.sessions.forEach(function (s) {
+      if (s.d < since) return;
+      (s.conf || []).forEach(function (c) { var it = byId[c[0]]; if (!it) return; confN++; if (c[1] === "sure" && !c[2]) sureWrong[it.skill] = (sureWrong[it.skill] || 0) + 1; if (c[1] === "not" && c[2]) notRight++; });
+      if (s.think) { thinkN++; if (s.think[1] === 1) thinkOk++; }
+    });
+    var sw = Object.keys(sureWrong), st = CO.stickers(S);
+    var h = '<section class="panel"><h3>自信の申告・考える問い（直近30日）</h3>';
+    h += "<p>自信の申告 " + confN + " 回・考える問い " + thinkN + " 回（正誤のある問い " + thinkOk + " 回正解）・Sam's notebook " + CO.ensure(S).notebook.length + "・ボスのシール " + st.tried + "（全問正解 " + st.perfect + "）</p>";
+    h += "<p>自信ありで間違えた技能：" + (sw.length ? sw.map(function (k) { return esc((C.skills[k] && C.skills[k].en) || k) + "×" + sureWrong[k]; }).join("、") : "なし") + "</p>";
+    if (notRight) h += "<p>自信なしで正解：" + notRight + " 回（できているのに自信がない）</p>";
+    h += '<p class="note">「自信ありで間違えた」問題は思い込みの可能性があり、次の回で先に確認します。考える問い・ボスはポイントと学習日には入りません。</p></section>';
+    return h;
+  }
   function summarize() {
     var m = ymd(weekStart(new Date())); m = addDays(-((new Date(today()) - new Date(m)) / 86400000) - 21);  // 直近4週の始まり（月曜）
     var since = addDays(-30);
@@ -741,6 +863,7 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
     });
     h += '<p class="note">60%未満（赤）は要練習。間違えた技能は、次の回に同じ技能の別の問題が自動で出ます。毎日やらなくても、週1回でも、日本でまとめてやっても、続きから積み上がります。</p></section>';
 
+    if (CO) h += coachParentHTML();
     h += '<section class="panel"><h3>よく間違える問題</h3>';
     if (!sm.missed.length) h += '<p class="muted">まだありません。</p>';
     else {
@@ -776,6 +899,11 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
     if (!el || el.disabled) return;
     var a = el.getAttribute("data-action");
     if (a === "start-mix" || a === "start-long") { setRound(a === "start-long" ? "long" : "short"); startSession(buildMix()); }
+    else if (a === "start-boss") { setRound("short"); var sb = buildBoss(); if (sb) startSession(sb); else { sess = null; ui = {}; go("home"); } }
+    else if (a === "pick-conf") { if (!ui.answered && ui.pendingK != null) grade(ui.pendingK, el.getAttribute("data-c")); }
+    else if (a === "think-pick") thinkPick(+el.getAttribute("data-k"));
+    else if (a === "think-hint") { if (ui.think) { ui.think.st.hint = true; render(); } }
+    else if (a === "think-next") thinkNext();
     else if (a === "start-unit") { setRound("short"); startSession(buildUnit(el.getAttribute("data-unit"))); }
     else if (a === "stop") finish(true);
     else if (a === "home") { sess = null; ui = {}; go("home"); }
@@ -783,11 +911,9 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
     else if (a === "hint") { ui.hint = true; render(); }
     else if (a === "choose") {
       if (ui.answered) return;
-      var cur = sess.queue[sess.i], it = byId[cur.id], k = +el.getAttribute("data-k");
-      var ok = cur.order[k] === it.a;
-      ui.answered = { k: k, ok: ok, title: (ok ? PRAISE : NOT)[Math.floor(Math.random() * (ok ? PRAISE.length : NOT.length))] };
-      answer(ok, it.options[cur.order[k]]);
-      render();
+      var k = +el.getAttribute("data-k");
+      if (confSlot()) { ui.pendingK = k; render(); return; }   // 自信の申告の問題：選び直せる。How sure? を押したら丸つけ
+      grade(k, null);
     }
     else if (a === "next") advance();
     else if (a === "reveal") { ui.revealed = true; render(); }
