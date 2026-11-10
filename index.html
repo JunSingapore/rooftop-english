@@ -632,7 +632,7 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
       h += '<button class="' + cls + '" data-action="choose" data-k="' + k + '"' + (ans ? " disabled" : "") + '><span class="key">' + "ABCD".charAt(k) + '</span><span class="txt">' + esc(it.options[oi]) + "</span>" + mark + "</button>";
     });
     h += "</div>";
-    if (!ans && confSlot()) h += ui.pendingK != null ? CO.confButtonsHTML("pick-conf") : '<p class="small muted">Pick an answer — then Olive will ask how sure you are.</p>';
+    if (!ans && confSlot()) h += ui.pendingK != null ? CO.confButtonsHTML("pick-conf") : '<p class="small muted">Pick an answer — then En will ask how sure you are.</p>';
     if (ans) {
       h += '<div class="feedback ' + (ans.ok ? "ok" : "no") + '" role="status"><p class="fb-title">' + esc(ans.title) + "</p>";
       if (!ans.ok) h += "<p>The answer is <strong>" + esc(it.options[it.a]) + "</strong>.</p>";
@@ -812,7 +812,7 @@ textarea { width: 100%; min-height: 120px; font: 13px/1.4 ui-monospace, Menlo, m
     });
     var sw = Object.keys(sureWrong), st = CO.stickers(S);
     var h = '<section class="panel"><h3>自信の申告・考える問い（直近30日）</h3>';
-    h += "<p>自信の申告 " + confN + " 回・考える問い " + thinkN + " 回（正誤のある問い " + thinkOk + " 回正解）・Sam's notebook " + CO.ensure(S).notebook.length + "・ボスのシール " + st.tried + "（全問正解 " + st.perfect + "）</p>";
+    h += "<p>自信の申告 " + confN + " 回・考える問い " + thinkN + " 回（正誤のある問い " + thinkOk + " 回正解）・Koh's notebook " + CO.ensure(S).notebook.length + "・ボスのシール " + st.tried + "（全問正解 " + st.perfect + "）</p>";
     h += "<p>自信ありで間違えた技能：" + (sw.length ? sw.map(function (k) { return esc((C.skills[k] && C.skills[k].en) || k) + "×" + sureWrong[k]; }).join("、") : "なし") + "</p>";
     if (notRight) h += "<p>自信なしで正解：" + notRight + " 回（できているのに自信がない）</p>";
     h += '<p class="note">「自信ありで間違えた」問題は思い込みの可能性があり、次の回で先に確認します。考える問い・ボスはポイントと学習日には入りません。</p></section>';

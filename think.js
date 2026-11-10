@@ -1,80 +1,80 @@
-/* Rooftop English — 考える問い（Sam の間違い探し・Olive の問い）2026-11-08
+/* Rooftop English — 考える問い（Koh の間違い探し・En の問い）2026-11-08
  * ルール：
- *  - id は一度付けたら変えない（出た回数・Sam's notebook が id に紐づく）
+ *  - id は一度付けたら変えない（出た回数・Koh's notebook が id に紐づく）
  *  - who: "sam"（間違い探し）/ "olive"（why=なぜ？ / how=どうやった? 正誤なし / asn=いつも・ときどき・決して）
  *  - link: つながる技能（content.js の skills）。needOk: その技能を正解した直後だけ出す
- *  - a: 正解の選択肢番号（null＝正誤なし）。fb: 選択肢ごとの一言（options と同じ順）。more: Olive の一言
+ *  - a: 正解の選択肢番号（null＝正誤なし）。fb: 選択肢ごとの一言（options と同じ順）。more: En の一言
  *  - 例文はすべて自作。本の本文は使わない
  */
 window.THINK_BANK = [
-  /* ── Sam の間違い探し ── */
+  /* ── Koh の間違い探し ── */
   { id: "sam-recieve", who: "sam", kind: "mistake", link: ["spelling"],
-    say: "I wrote: “I recieved a letter from my aunt.”", q: "What did Sam get wrong?",
+    say: "I wrote: “I recieved a letter from my aunt.”", q: "What did Koh get wrong?",
     options: ["“received” — i before e, except after c", "“letter” should be “leter”", "Nothing — it’s right"], a: 0,
     fb: ["After c, it’s usually ei: receive, ceiling, deceive.", "“letter” has a double t.", "Look closely at the word after “I”."],
     more: "Other words like it: ceiling, receipt, deceive.", ja: "c のあとは ie？ ei？" },
   { id: "sam-their-there", who: "sam", kind: "mistake", link: ["spelling", "grammar"],
-    say: "I wrote: “The children put there coats on.”", q: "What did Sam get wrong?",
+    say: "I wrote: “The children put there coats on.”", q: "What did Koh get wrong?",
     options: ["It should be “their” — it shows the coats belong to them", "It should be “they’re”", "Nothing — it’s right"], a: 0,
     fb: ["their = belonging, there = a place, they’re = they are.", "“They’re coats on” means “they are coats on” — that doesn’t make sense.", "Whose coats are they?"],
     more: "Trick: “there” has “here” inside it — both are places.", ja: "「だれの」コート？" },
   { id: "sam-speech-comma", who: "sam", kind: "mistake", link: ["punctuation", "speech"],
-    say: "I wrote: “Come here said Mum.” (with speech marks round Come here)", q: "What did Sam get wrong?",
+    say: "I wrote: “Come here said Mum.” (with speech marks round Come here)", q: "What did Koh get wrong?",
     options: ["A comma is missing before the closing speech marks: “Come here,” said Mum.", "The speech marks should go round “said Mum”", "Nothing — it’s right"], a: 0,
     fb: ["The spoken words end with a comma when the sentence carries on.", "Only the words actually spoken go inside.", "Something is missing between “here” and the speech marks."],
     more: "If Mum is asking: “Are you coming?” asked Mum. — the question mark goes inside too.", ja: "話した言葉のおわりに何が必要？" },
   { id: "sam-its", who: "sam", kind: "mistake", link: ["punctuation", "grammar"],
-    say: "I wrote: “The dog wagged it’s tail.”", q: "What did Sam get wrong?",
+    say: "I wrote: “The dog wagged it’s tail.”", q: "What did Koh get wrong?",
     options: ["“its” — no apostrophe when it shows belonging. “it’s” means “it is”", "“tail” needs an apostrophe", "Nothing — it’s right"], a: 0,
     fb: ["Test it: “The dog wagged it is tail” doesn’t make sense.", "The tail doesn’t own anything.", "Try saying “it is” instead of “it’s”."],
     more: "his, her, its — none of them have an apostrophe.", ja: "it's ＝ it is。意味は通る？" },
   { id: "sam-shaking-cold", who: "sam", kind: "mistake", link: ["inference", "characterisation"],
     say: "“Mia’s hands shook as she opened the envelope.” That means Mia is cold!", q: "What is a better way to read it?",
-    options: ["Shaking hands while opening an envelope suggest she is nervous or excited", "Sam is right — shaking always means cold", "Mia is angry with the envelope"], a: 0,
+    options: ["Shaking hands while opening an envelope suggest she is nervous or excited", "Koh is right — shaking always means cold", "Mia is angry with the envelope"], a: 0,
     fb: ["Look at what she is doing — waiting for news.", "Nothing in the sentence talks about the weather.", "There is no clue about anger."],
     more: "Reading between the lines = clue in the text + what you already know.", ja: "手がふるえる理由は寒さだけ？" },
   { id: "sam-personification", who: "sam", kind: "mistake", link: ["poetic-devices"],
-    say: "“The wind whispered through the trees” is a simile.", q: "What did Sam get wrong?",
+    say: "“The wind whispered through the trees” is a simile.", q: "What did Koh get wrong?",
     options: ["It’s personification — the wind does a human action. A simile uses “like” or “as”", "It’s alliteration", "Nothing — it’s right"], a: 0,
     fb: ["Only people really whisper.", "Alliteration repeats the same first sound (wild, windy, wet).", "Is there a “like” or “as” in it?"],
     more: "Simile: “The wind was like a whisper.” Personification: “The wind whispered.”", ja: "like / as は入っている？" },
   { id: "sam-haiku-777", who: "sam", kind: "mistake", link: ["poetic-forms"],
-    say: "A haiku has three lines of 7 syllables each.", q: "What did Sam get wrong?",
+    say: "A haiku has three lines of 7 syllables each.", q: "What did Koh get wrong?",
     options: ["A haiku has 5 – 7 – 5 syllables", "A haiku has 7 – 5 – 7 syllables", "Nothing — it’s right"], a: 0,
     fb: ["Short, long, short.", "That’s the other way round.", "Count a haiku you know on your fingers."],
     more: "Clap it: but-ter-fly = 3 syllables.", ja: "俳句は 5・7・5" },
   { id: "sam-fact-opinion", who: "sam", kind: "mistake", link: ["biography", "shakespeare-life"],
-    say: "“Shakespeare was the greatest writer ever” is a fact.", q: "What did Sam get wrong?",
+    say: "“Shakespeare was the greatest writer ever” is a fact.", q: "What did Koh get wrong?",
     options: ["It’s an opinion — people can disagree. A fact can be checked", "It’s a fact because lots of people say it", "It’s a question"], a: 0,
     fb: ["A fact: Shakespeare wrote Hamlet. You can check it.", "Many people agreeing doesn’t make it a fact.", "There’s no question mark."],
     more: "Words like “greatest”, “best” and “worst” often show an opinion.", ja: "確かめられる？ 人によってちがう？" },
   { id: "sam-adverb", who: "sam", kind: "mistake", link: ["grammar", "sentence-craft"],
-    say: "In “The tiny mouse ran quickly”, “quickly” is an adjective.", q: "What did Sam get wrong?",
+    say: "In “The tiny mouse ran quickly”, “quickly” is an adjective.", q: "What did Koh get wrong?",
     options: ["“quickly” is an adverb — it tells us how the mouse ran", "“quickly” is a noun", "Nothing — it’s right"], a: 0,
     fb: ["Adjectives describe nouns (tiny mouse). Adverbs describe verbs (ran quickly).", "A noun is a person, place or thing.", "Which word does “quickly” describe?"],
     more: "In that sentence, “tiny” is the adjective.", ja: "quickly は何をくわしくしている？" },
   { id: "sam-fragment", who: "sam", kind: "mistake", link: ["sentence-craft", "grammar"],
-    say: "“Because it was raining.” is a full sentence. It has a capital letter and a full stop!", q: "What did Sam get wrong?",
+    say: "“Because it was raining.” is a full sentence. It has a capital letter and a full stop!", q: "What did Koh get wrong?",
     options: ["It needs a main clause, e.g. “We stayed in because it was raining.”", "It just needs a question mark", "Nothing — it’s right"], a: 0,
     fb: ["“Because …” leaves us waiting — what happened?", "It isn’t a question.", "Read it aloud — does it feel finished?"],
     more: "Capital letters and full stops are not enough — a sentence must make complete sense.", ja: "雨だったから……どうなった？" },
   { id: "sam-direct-indirect", who: "sam", kind: "mistake", link: ["characterisation", "character-vocab"],
-    say: "“Tom slammed the door and stomped upstairs.” This is direct characterisation.", q: "What did Sam get wrong?",
+    say: "“Tom slammed the door and stomped upstairs.” This is direct characterisation.", q: "What did Koh get wrong?",
     options: ["It’s indirect — we work out that Tom is angry from his actions", "It’s direct because it uses Tom’s name", "Nothing — it’s right"], a: 0,
     fb: ["Direct would be: “Tom was angry.”", "Using a name doesn’t make it direct.", "Does it TELL us how Tom feels, or SHOW us?"],
     more: "Show, don’t tell: actions, speech and thoughts let the reader work it out.", ja: "「怒っていた」と書いてある？" },
   { id: "sam-hamlet-comedy", who: "sam", kind: "mistake", link: ["plot", "drama-terms", "theme"],
-    say: "Hamlet is a comedy, because it has a funny ghost in it.", q: "What did Sam get wrong?",
+    say: "Hamlet is a comedy, because it has a funny ghost in it.", q: "What did Koh get wrong?",
     options: ["Hamlet is a tragedy — it ends with the deaths of the main characters", "Hamlet is a history play", "Nothing — it’s right"], a: 0,
     fb: ["Shakespeare’s tragedies end sadly.", "His history plays are about real English kings.", "Is the ghost there to make us laugh?"],
     more: "Shakespeare wrote comedies, tragedies and histories.", ja: "ハムレットは悲劇？ 喜劇？" },
   { id: "sam-biography-auto", who: "sam", kind: "mistake", link: ["biography"],
-    say: "A biography is when you write the story of your own life.", q: "What did Sam get wrong?",
+    say: "A biography is when you write the story of your own life.", q: "What did Koh get wrong?",
     options: ["That’s an autobiography. A biography is written by someone else, in the third person", "A biography is always made up", "Nothing — it’s right"], a: 0,
     fb: ["auto = self. A biography uses he / she / they.", "Biographies are true stories.", "Who writes a biography?"],
     more: "Biography: “Shakespeare was born in Stratford.” Autobiography: “I was born in …”", ja: "auto＝自分" },
 
-  /* ── Olive：なぜ？ ── */
+  /* ── En：なぜ？ ── */
   { id: "ol-why-crept", who: "olive", kind: "why", link: ["word-choice", "action-writing"],
     say: "Let’s think about why some words work better.", q: "Why is “crept” better than “went” in “The cat crept towards the bird”?",
     options: ["It shows HOW the cat moved — slowly and quietly", "It’s a longer word", "It rhymes with “bird”"], a: 0,
@@ -116,7 +116,7 @@ window.THINK_BANK = [
     fb: ["Time connectives show the order.", "Those join ideas, not times.", "Those are adjectives."],
     more: "Biographies often use dates too: “In 1564 … Later … Finally …”", ja: "時の順番を表す言葉" },
 
-  /* ── Olive：どうやった？（正誤なし） ── */
+  /* ── En：どうやった？（正誤なし） ── */
   { id: "ol-how-spelling", who: "olive", kind: "how", needOk: true, link: ["spelling"],
     say: "You spelled it right! How do you remember tricky words?", q: "What helps you most?",
     options: ["Saying it in a funny way (Wed-nes-day)", "Look, cover, write, check", "Finding a small word inside (be-LIE-ve)", "Something else"], a: null,
@@ -128,7 +128,7 @@ window.THINK_BANK = [
     fb: ["Clue words are your evidence.", "Actions and speech show feelings.", "Putting yourself in their shoes really works.", "Your own way is great — can you explain it?"],
     more: "Next time, point to the exact word that proves it — that’s what good readers do." },
 
-  /* ── Olive：いつも？ときどき？決して？ ── */
+  /* ── En：いつも？ときどき？決して？ ── */
   { id: "ol-asn-ly", who: "olive", kind: "asn", keepOrder: true, link: ["grammar"],
     say: "A grammar puzzle.", q: "Adverbs end in -ly. Always, sometimes or never?",
     options: ["Always", "Sometimes", "Never"], a: 1,
